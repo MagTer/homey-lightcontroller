@@ -27,6 +27,16 @@ const MAX_ITERATIONS = 4;
 const MAX_LOOKBACK_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
+ * Type-priority for tiebreaking conditions that resolve to identical eventTimes.
+ * Lower number = higher priority. time > solar > lux.
+ */
+const TYPE_PRIORITY: Record<'time' | 'solar' | 'lux', number> = {
+  time: 0,
+  solar: 1,
+  lux: 2
+};
+
+/**
  * Record of a phase transition for diagnostic and logging purposes
  */
 export interface TransitionRecord {
@@ -73,8 +83,9 @@ function getNextPhase(currentPhase: Phase): Phase {
 /**
  * Evaluates a single phase's conditions to see if it should transition.
  * Returns the earliest triggering condition (OR semantics - first match wins).
+ * On ties (identical eventTimes), uses type-priority: time > solar > lux.
  */
-function evaluatePhaseConditions(
+export function evaluatePhaseConditions(
   schedule: PhaseSchedule,
   ctx: EvaluationContext,
   evalTime: Date
@@ -85,8 +96,14 @@ function evaluatePhaseConditions(
     const result = evaluateCondition(condition, ctx, evalTime);
 
     if (result.triggered && result.eventTime) {
-      // Keep the earliest triggering condition
-      if (!earliestResult || result.eventTime < earliestResult.eventTime!) {
+      const isStrictlyEarlier = !earliestResult ||
+        result.eventTime < earliestResult.eventTime!;
+      const isTieAndHigherPriority = !!earliestResult &&
+        earliestResult.eventTime !== undefined &&
+        earliestResult.reason !== undefined &&
+        result.eventTime.getTime() === earliestResult.eventTime.getTime() &&
+        TYPE_PRIORITY[condition.type] < TYPE_PRIORITY[earliestResult.reason];
+      if (isStrictlyEarlier || isTieAndHigherPriority) {
         earliestResult = {
           ...result,
           reason: condition.type

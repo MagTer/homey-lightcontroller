@@ -1,10 +1,10 @@
 {
   "nodes": [
     {
-      "id": "milestone:M001",
-      "label": "M001: Core State Machine & Store Readiness",
+      "id": "milestone:M002",
+      "label": "M002: Hardening & Resilience",
       "type": "milestone",
-      "description": "Active milestone: M001",
+      "description": "Active milestone: M002",
       "confidence": "EXTRACTED",
       "sourceFile": "STATE.md"
     },
@@ -14,6 +14,13 @@
       "type": "concept",
       "confidence": "EXTRACTED",
       "sourceFile": "STATE.md"
+    },
+    {
+      "id": "milestone:M001",
+      "label": "M001: Core State Machine & Store Readiness",
+      "type": "milestone",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-ROADMAP.md"
     },
     {
       "id": "slice:M001:S01",
@@ -208,6 +215,226 @@
       "label": "T02: Write prepublish.mjs script and wire npm prepublish entry",
       "type": "task",
       "confidence": "EXTRACTED"
+    },
+    {
+      "id": "slice:M002:S01",
+      "label": "S01: Node 20 engine downgrade",
+      "type": "slice",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M002/slices/S01/S01-PLAN.md"
+    },
+    {
+      "id": "task:M002:S01:T01",
+      "label": "T01: Lower engines.node to >=20.0.0 and prove build + tests still pass",
+      "type": "task",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "id": "slice:M002:S02",
+      "label": "S02: Reconciler single-retry on transient failure",
+      "type": "slice",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M002/slices/S02/S02-PLAN.md"
+    },
+    {
+      "id": "task:M002:S02:T01",
+      "label": "T01: Add retry helper and wire it through transition + maintenance paths with full Vitest coverage",
+      "type": "task",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "id": "slice:M002:S03",
+      "label": "S03: Eager config validation in onInit",
+      "type": "slice",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M002/slices/S03/S03-PLAN.md"
+    },
+    {
+      "id": "task:M002:S03:T01",
+      "label": "T01: Add eager config validation to MyApp.onInit and unit-test the four guard scenarios",
+      "type": "task",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "id": "slice:M002:S04",
+      "label": "S04: PhaseEngine type-priority tiebreak in catch-up",
+      "type": "slice",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M002/slices/S04/S04-PLAN.md"
+    },
+    {
+      "id": "task:M002:S04:T01",
+      "label": "T01: Add TYPE_PRIORITY tiebreak in PhaseEngine.evaluatePhaseConditions and verify with four unit tests",
+      "type": "task",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "id": "decision:M001:1",
+      "label": "**Zod for domain model and configuration validation**: Using Zod provides both runtime validation and TypeScript type inference from a single source of truth.",
+      "type": "decision",
+      "description": "Source: .gsd/DECISIONS.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:2",
+      "label": "**Pure Phase Engine**: Decoupling logic for calculating phase transitions allows for fast-forward catchup for reboots and deterministic testing.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S03/S03-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:3",
+      "label": "**Smart Reconciliation with Drift Detection**: Maintain an internal `lastAppSetState` map. If a device's current state differs from the last state the app set, skip reconciliation.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S04/S04-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:4",
+      "label": "**Lux sensor averaging (3-reading window)**: Filtering transient spikes using a rolling window ensures transitions are physically reliable.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S05/S05-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:5",
+      "label": "**Pre-publish bit-depth verification**: Implementing a custom script to check PNG bit depth avoids store rejections that the official validator misses.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:6",
+      "label": "**SDK Decoupling**: Decoupling logic from the Homey SDK via a DeviceAPI abstraction was critical for achieving high test coverage (98 tests).",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S04/S04-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:7",
+      "label": "**Validator Gaps**: The official Homey CLI validator does not check PNG bit depth, which is a common cause for human-review rejection.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:8",
+      "label": "**Catchup Safety**: Windowed evaluation in the PhaseEngine (clamped to 24h/4 iterations) successfully prevents infinite loops during reboot catchup.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S03/S03-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:9",
+      "label": "**Delegated Validation**: Entry points (API/Flow) perform minimal logic and rely on the core App class to enforce state rules via shared schemas.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S07/S07-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:10",
+      "label": "**Pure Persistence Helpers**: Decoupled SettingsStore logic for config storage and validation enables full unit testing of the API layer.",
+      "type": "decision",
+      "description": "Source: .gsd/PROJECT.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "decision:M001:11",
+      "label": "**PNG Bit-Depth Oversight**: Discovered that 16-bit PNGs pass `homey app validate` but fail manual store review; necessitated a custom byte-level checker.",
+      "type": "decision",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "lesson:M001:1",
+      "label": "**SDK Decoupling**: Decoupling logic from the Homey SDK via a DeviceAPI abstraction was critical for achieving high test coverage (98 tests).",
+      "type": "lesson",
+      "description": "Source: .gsd/milestones/M001/slices/S04/S04-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "lesson:M001:2",
+      "label": "**Validator Gaps**: The official Homey CLI validator does not check PNG bit depth, which is a common cause for human-review rejection.",
+      "type": "lesson",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "lesson:M001:3",
+      "label": "**Catchup Safety**: Windowed evaluation in the PhaseEngine (clamped to 24h/4 iterations) successfully prevents infinite loops during reboot catchup.",
+      "type": "lesson",
+      "description": "Source: .gsd/milestones/M001/slices/S03/S03-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "lesson:M001:4",
+      "label": "**Delegated Validation**: Entry points (API/Flow) perform minimal logic and rely on the core App class to enforce state rules via shared schemas.",
+      "type": "lesson",
+      "description": "Source: .gsd/milestones/M001/slices/S07/S07-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "lesson:M001:5",
+      "label": "**Pure Persistence Helpers**: Decoupled SettingsStore logic for config storage and validation enables full unit testing of the API layer.",
+      "type": "lesson",
+      "description": "Source: .gsd/PROJECT.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "lesson:M001:6",
+      "label": "**PNG Bit-Depth Oversight**: Discovered that 16-bit PNGs pass `homey app validate` but fail manual store review; necessitated a custom byte-level checker.",
+      "type": "lesson",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "pattern:M001:1",
+      "label": "**Delegated Validation**: Entry points (API/Flow) perform minimal logic and rely on the core App class to enforce state rules via shared schemas.",
+      "type": "pattern",
+      "description": "Source: .gsd/milestones/M001/slices/S07/S07-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "pattern:M001:2",
+      "label": "**Pure Persistence Helpers**: Decoupled SettingsStore logic for config storage and validation enables full unit testing of the API layer.",
+      "type": "pattern",
+      "description": "Source: .gsd/PROJECT.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "pattern:M001:3",
+      "label": "**PNG Bit-Depth Oversight**: Discovered that 16-bit PNGs pass `homey app validate` but fail manual store review; necessitated a custom byte-level checker.",
+      "type": "pattern",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
+    },
+    {
+      "id": "surprise:M001:1",
+      "label": "**PNG Bit-Depth Oversight**: Discovered that 16-bit PNGs pass `homey app validate` but fail manual store review; necessitated a custom byte-level checker.",
+      "type": "lesson",
+      "description": "Source: .gsd/milestones/M001/slices/S08/S08-SUMMARY.md",
+      "confidence": "EXTRACTED",
+      "sourceFile": "milestones/M001/M001-LEARNINGS.md"
     }
   ],
   "edges": [
@@ -396,7 +623,181 @@
       "to": "task:M001:S08:T02",
       "type": "contains",
       "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M002",
+      "to": "slice:M002:S01",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "slice:M002:S01",
+      "to": "task:M002:S01:T01",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M002",
+      "to": "slice:M002:S02",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "slice:M002:S02",
+      "to": "task:M002:S02:T01",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M002",
+      "to": "slice:M002:S03",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "slice:M002:S03",
+      "to": "task:M002:S03:T01",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M002",
+      "to": "slice:M002:S04",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "slice:M002:S04",
+      "to": "task:M002:S04:T01",
+      "type": "contains",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:1",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:2",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:3",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:4",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:5",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:6",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:7",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:8",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:9",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:10",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "decision:M001:11",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "lesson:M001:1",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "lesson:M001:2",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "lesson:M001:3",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "lesson:M001:4",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "lesson:M001:5",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "lesson:M001:6",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "pattern:M001:1",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "pattern:M001:2",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "pattern:M001:3",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "from": "milestone:M001",
+      "to": "surprise:M001:1",
+      "type": "relates_to",
+      "confidence": "EXTRACTED"
     }
   ],
-  "builtAt": "2026-04-26T10:30:41.912Z"
+  "builtAt": "2026-04-26T21:25:11.102Z"
 }

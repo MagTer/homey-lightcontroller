@@ -1,5 +1,5 @@
 import Homey from 'homey';
-import { parseConfig, type AppConfig } from './src/lib/config/ConfigParser.js';
+import { parseConfig, safeParseConfig, type AppConfig } from './src/lib/config/ConfigParser.js';
 import { ConfigValidationError } from './src/lib/config/ConfigParser.js';
 import {
   getConfigFromStore,
@@ -69,6 +69,20 @@ export default class MyApp extends Homey.App {
 
   async onInit() {
     this.log('MyApp has been initialized');
+
+    const store = this.homey.settings as unknown as SettingsStore;
+
+    const raw = getConfigFromStore(store);
+    if (raw === null) {
+      this.error('onInit: config missing from store; skip engine start');
+      return;
+    }
+
+    const result = safeParseConfig(raw);
+    if (!result.ok) {
+      this.error('onInit: invalid config', { issues: result.error.issues });
+      return;
+    }
 
     this.homey.flow
       .getActionCard('set_phase')

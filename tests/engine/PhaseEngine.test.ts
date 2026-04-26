@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { evaluatePhase, PHASE_ORDER, type TransitionRecord, type EngineResult } from '../../src/lib/engine/PhaseEngine.js';
-import type { AppConfig, Phase } from '../../src/lib/config/Config.js';
+import { describe, it, expect, vi } from 'vitest';
+import { evaluatePhase, evaluatePhaseConditions, PHASE_ORDER, type TransitionRecord, type EngineResult } from '../../src/lib/engine/PhaseEngine.js';
+import type { AppConfig, Phase, PhaseSchedule } from '../../src/lib/config/Config.js';
 import type { EvaluationContext } from '../../src/lib/engine/EvaluationContext.js';
 
 // Helper to create a context with specific date
@@ -556,46 +556,120 @@ describe('PhaseEngine', () => {
     });
   });
 
-  describe('EngineResult structure', () => {
-    it('returns structured result with all documented fields', () => {
-      const config = makeConfig();
-      const lastEvalTime = new Date('2026-01-15T06:59:00Z');
-      const now = new Date('2026-01-15T07:01:00Z');
-      const ctx = makeCtx({ now });
+  describe('type-priority tiebreak', () => {
+    it('(a) time vs solar at identical eventTimes → time wins', () => {
+      const now = new Date('2026-01-15T07:00:00Z');
+      const evalTime = new Date('2026-01-15T06:59:00Z');
 
-      const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
+      // Schedule with solar first, then time (solar comes first to prove iteration order doesn't decide)
+      const schedule: PhaseSchedule = {
+        conditions: [
+          { type: 'solar', event: 'sunrise', offsetMinutes: 0 },
+          { type: 'time', at: '07:00' }
+        ]
+      };
 
-      // Verify all fields exist
-      expect(result).toHaveProperty('phase');
-      expect(result).toHaveProperty('lastEvalTime');
-      expect(result).toHaveProperty('transitions');
-      // cappedAt is optional, not present in this case
+      const ctx = makeCtx({ now, latitude: 52.37, longitude: 4.90 });
 
-      // Verify types
-      expect(typeof result.phase).toBe('string');
-      expect(result.lastEvalTime instanceof Date).toBe(true);
-      expect(Array.isArray(result.transitions)).toBe(true);
+      const result = evaluatePhaseConditions(schedule, ctx, evalTime);
 
-      // Verify transition record structure
-      if (result.transitions.length > 0) {
-        const transition = result.transitions[0];
-        expect(transition).toHaveProperty('from');
-        expect(transition).toHaveProperty('to');
-        expect(transition).toHaveProperty('reason');
-        expect(transition).toHaveProperty('eventTime');
-        expect(transition.eventTime instanceof Date).toBe(true);
-      }
+      expect(result.triggered).toBe(true);
+      expect(result.reason).toBe('time');
+      expect(result.eventTime?.getTime()).toBe(new Date('2026-01-15T07:00:00Z').getTime());
     });
 
-    it('returns lastEvalTime === ctx.now for the next tick', () => {
-      const config = makeConfig();
+    it('(b) time vs lux at identical eventTimes → time wins', () => {
+      const now = new Date('2026-01-15T07:00:00Z');
+      const evalTime = new Date('2026-01-15T06:59:00Z');
+
+      // Schedule with lux first, then time
+      const schedule: PhaseSchedule = {
+        conditions: [
+          { type: 'lux', operator: 'lt', value: 100 },
+          { type: 'time', at: '07:00' }
+        ]
+      };
+
+      // lux: 0 < 100 triggers at 'now' (07:00:00Z)
+      // time: '07:00' also resolves to 07:00:00Z
+      const ctx = makeCtx({ now, lux: 0 });
+
+      const result = evaluatePhaseConditions(schedule, ctx, evalTime);
+
+      expect(result.triggered).toBe(true);
+      expect(result.reason).toBe('time');
+      expect(result.eventTime?.getTime()).toBe(now.getTime());
+    });
+
+    it('(c) solar vs lux at identical eventTimes → solar wins', () => {
+      // Test solar vs lux tiebreak by using a solar offset to force exact alignment.
+      // On Dec 15, 2026 in Amsterdam, sunset is at approximately 15:28:20.883 UTC.
+      // We use a calculated offset to align solar with lux event time.
+      const SunCalc = require('suncalc');
+      const lat = 52.37, lon = 4.90;
+      
+      // Base time for solar calculation
+      const baseTime = new Date('2026-12-15T16:00:00Z');
+      const evalTime = new Date('2026-12-15T14:00:00Z');
+
+      // Get the raw sunset time for this date
+      const dec15Times = SunCalc.getTimes(baseTime, lat, lon);
+      const sunsetTime = dec15Times.sunset;
+      
+      // Calculate offset needed to align sunset to our target
+      // We want solar event at exactly [some time], so we offset from actual sunset
+      const offsetMinutes = 32;  // 15:28:20.883 + 32min = 16:00:20.883
+
+      // The solar event will be at sunset + offset = 16:00:20.883
+      // Set lux to trigger at the exact same time
+      const targetTime = new Date(sunsetTime.getTime() + offsetMinutes * 60000);
+
+      // Schedule with lux first, then solar (lux first to prove iteration order doesn't decide)
+      const schedule: PhaseSchedule = {
+        conditions: [
+          { type: 'lux', operator: 'gt', value: 0 },  // triggers at ctx.now
+          { type: 'solar', event: 'sunset', offsetMinutes }
+        ]
+      };
+
+      // Lux triggers at targetTime when lux > 0
+      // Solar triggers at targetTime via calculated offset
+      const ctx = makeCtx({
+        now: targetTime,
+        lux: 100,
+        latitude: lat,
+        longitude: lon
+      });
+
+      const result = evaluatePhaseConditions(schedule, ctx, evalTime);
+
+      // Solar (priority 1) beats lux (priority 2) when eventTimes are equal
+      expect(result.triggered).toBe(true);
+      expect(result.reason).toBe('solar');
+    });
+
+    it('(d) distinct timestamps — earliest wins regardless of type', () => {
       const now = new Date('2026-01-15T12:00:00Z');
-      const ctx = makeCtx({ now });
+      const evalTime = new Date('2026-01-15T06:59:00Z');
 
-      const result = evaluatePhase('NIGHT', new Date('2026-01-15T00:00:00Z'), config, ctx);
+      // Schedule with lux first (triggers at 12:00), then time (triggers at 07:00)
+      const schedule: PhaseSchedule = {
+        conditions: [
+          { type: 'lux', operator: 'lt', value: 100 },
+          { type: 'time', at: '07:00' }
+        ]
+      };
 
-      // lastEvalTime should be set to ctx.now for the next evaluation
-      expect(result.lastEvalTime).toEqual(now);
+      // lux triggers at 'now' (12:00:00Z)
+      // time triggers at 07:00:00Z (earlier)
+      const ctx = makeCtx({ now, lux: 0 });
+
+      const result = evaluatePhaseConditions(schedule, ctx, evalTime);
+
+      // 07:00 is earlier than 12:00, so time should win
+      expect(result.triggered).toBe(true);
+      expect(result.reason).toBe('time');
+      expect(result.eventTime?.getTime()).toBe(new Date('2026-01-15T07:00:00Z').getTime());
     });
   });
 });

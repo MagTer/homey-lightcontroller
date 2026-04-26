@@ -1,7 +1,7 @@
 # Codebase Map
 
-Generated: 2026-04-26T10:29:59Z | Files: 59 | Described: 0/59
-<!-- gsd:codebase-meta {"generatedAt":"2026-04-26T10:29:59Z","fingerprint":"9b6e26d204e13f447d176dd3f3840b8c68ccd5c3","fileCount":59,"truncated":false} -->
+Generated: 2026-04-26T21:29:25Z | Files: 60 | Described: 0/60
+<!-- gsd:codebase-meta {"generatedAt":"2026-04-26T21:29:25Z","fingerprint":"93f7878949986e45b9c32a2980b4ff7c89251def","fileCount":60,"truncated":false} -->
 
 ### (root)/
 - `.gitignore`
@@ -84,6 +84,7 @@ Generated: 2026-04-26T10:29:59Z | Files: 59 | Described: 0/59
 - `tests/smoke.test.ts`
 
 ### tests/api/
+- `tests/api/AppInit.test.ts`
 - `tests/api/AppSettings.test.ts`
 - `tests/api/FlowCards.test.ts`
 - `tests/api/RestApi.test.ts`

@@ -10,7 +10,7 @@ Eliminating automation "race conditions" and "orphaned lights" by replacing inde
 
 ## Current State
 
-Milestone M001 Complete. All core logic (Phase Engine, Reconciler, Lux Aggregator, Dimming Curves) is implemented and verified by 98 Vitest tests. The app is store-ready with a pre-publish gate ensuring 8-bit PNG compliance and valid publish-level metadata.
+Milestone M002 (Hardening & Resilience) is complete. The app is now fully compatible with Node 20 (Homey Pro), features single-retry mesh resilience, eager configuration validation at the app boundary, and deterministic catch-up logic.
 
 ## Architecture / Key Patterns
 
@@ -25,10 +25,12 @@ Milestone M001 Complete. All core logic (Phase Engine, Reconciler, Lux Aggregato
 - **Dimming Curves:** Pure interpolation helpers (DimmingCurve) for lux-based and temporal (twilight) dimming ramps.
 - **Environment Awareness:** Automatic integration with Homey Geolocation for solar calculations and Bank Holiday detection via `date-holidays`.
 - **Mesh Protection:** Enforced 50ms delays between all Homey API device commands.
+- **Single-Retry Resilience:** A 200ms single-retry path in the Reconciler absorbs transient mesh failures without regressing mesh-pacing guarantees.
 - **TypeScript ESM Scaffold:** Modern development with NodeNext module resolution and automated compilation to `.homeybuild/`.
 - **Pure Persistence Helpers:** Decoupled SettingsStore logic for config storage and validation, enabling full unit testing of the API layer.
 - **Unified External Surfaces:** REST API and Flow Cards share a single validation path via `App.forcePhase`, protecting internal state from malformed external input.
 - **Pre-Publish Guard:** Durable `npm run prepublish` gate that enforces low-level PNG constraints (8-bit bit depth) and publish-level metadata validity.
+- **Deterministic Tiebreaks:** Type-priority (time > solar > lux) for handling simultaneous condition triggers in PhaseEngine.
 
 ## Capability Contract
 
@@ -37,3 +39,4 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 ## Milestone Sequence
 
 - [x] M001: Core State Machine & Store Readiness — Implementation of the 4-phase logic, reconciler, holiday/solar support, settings UI, and store-ready packaging. (Complete)
+- [x] M002: Hardening & Resilience — Node 20 compatibility, single-retry mesh resilience, eager config validation, and PhaseEngine tiebreak logic. (Complete)

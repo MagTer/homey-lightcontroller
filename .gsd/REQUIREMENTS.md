@@ -2,19 +2,6 @@
 
 This file is the explicit capability and coverage contract for the project.
 
-## Active
-
-### R007 — All PNG assets must be 8-bit RGBA; app must explicitly exclude "cloud" platforms.
-- Class: compliance/security
-- Status: active
-- Description: All PNG assets must be 8-bit RGBA; app must explicitly exclude "cloud" platforms.
-- Why it matters: Prevents portal rejection.
-- Source: user
-- Primary owning slice: M001/S11
-- Supporting slices: none
-- Validation: mapped
-- Notes: Automate verification in pre-publish script.
-
 ## Validated
 
 ### R001 — App must maintain exactly one of four phases (NIGHT, MORNING, DAY, EVENING) and survive reboots.
@@ -83,6 +70,50 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: Verified in tests/engine/Reconciler.test.ts using Vitest fake timers to prove that commands are consistently spaced by at least 50ms, preventing mesh saturation.
 - Notes: Critical for stability.
 
+### R007 — All PNG assets must be 8-bit RGBA; app must explicitly exclude "cloud" platforms.
+- Class: compliance/security
+- Status: validated
+- Description: All PNG assets must be 8-bit RGBA; app must explicitly exclude "cloud" platforms.
+- Why it matters: Prevents portal rejection.
+- Source: user
+- Primary owning slice: M001/S11
+- Supporting slices: none
+- Validation: Verified by prepublish script in M001/S11 which enforces 8-bit PNG depth and cloud exclusion in app.json metadata.
+- Notes: Automate verification in pre-publish script.
+
+### R008 — App must support Node.js >=20.0.0 for Homey Pro compatibility.
+- Class: compliance/security
+- Status: validated
+- Description: App must support Node.js >=20.0.0 for Homey Pro compatibility.
+- Why it matters: Ensures the app can be installed on current Homey Pro firmware.
+- Source: user
+- Validation: package.json engine constraint lowered to >=20.0.0; npm run build and npm run test pass.
+- Notes: Constraint lowered in S01. Build and full test suite (98 tests) verified passing on Node 22 (as proxy for Node 20+ toolchain compatibility). Full runtime verification deferred to milestone validation.
+
+### R009 — App must handle mesh network transient failures via 200ms delays and single-retry logic.
+- Class: quality-attribute
+- Status: validated
+- Description: App must handle mesh network transient failures via 200ms delays and single-retry logic.
+- Why it matters: Improves reliability in dense Zigbee/Z-Wave networks.
+- Source: user
+- Validation: Verified in tests/engine/Reconciler.test.ts where a single-retry path (default 200ms) handles transient setCapability failures, correctly populating applied[] on success and failed[] on persistent failure, while preserving the 50ms mesh pacing delay. Implementation in Reconciler.ts uses a configurable retryDelayMs and a setCapabilityWithRetry helper.
+
+### R010 — App must enforce a validated configuration contract at the app boundary (getConfig).
+- Class: quality-attribute
+- Status: validated
+- Description: App must enforce a validated configuration contract at the app boundary (getConfig).
+- Why it matters: Ensures the application engine always operates on valid, consistent data.
+- Source: user
+- Validation: Verified in S03 (tests/api/AppInit.test.ts) where MyApp.onInit() now eagerly validates the stored configuration via Zod. The app refuses to initialize flow cards or start the engine if the config is missing or malformed, ensuring that the 'getConfig()' boundary always serves valid data to the rest of the application.
+
+### R011 — PhaseEngine must prioritize time-based conditions over sensor-based conditions during reboot catch-up.
+- Class: quality-attribute
+- Status: validated
+- Description: PhaseEngine must prioritize time-based conditions over sensor-based conditions during reboot catch-up.
+- Why it matters: Ensures deterministic state recovery after a Homey reboot.
+- Source: user
+- Validation: Implemented a deterministic type-priority tiebreak (time > solar > lux) in PhaseEngine.evaluatePhaseConditions. Verified by 4 new unit tests in tests/engine/PhaseEngine.test.ts proving that time beats solar/lux and solar beats lux at identical eventTimes, while earliest timestamp still wins in non-tie scenarios.
+
 ## Traceability
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
@@ -93,11 +124,15 @@ This file is the explicit capability and coverage contract for the project.
 | R004 | core-capability | validated | M001/S04 | none | Verified in S03 (tests/engine/PhaseEngine.test.ts) using Dutch public holidays. The getScheduleType helper correctly identifies public holidays as weekends. |
 | R005 | primary-user-loop | validated | M001/S08 | M001/S09 | Homey publish validator ('npx homey app validate --level publish') confirms the settings UI ('settings' block in app.json) is correctly defined and all required assets/fields for the store are present. User selection of devices and config saving was manually verified in S06. |
 | R006 | quality-attribute | validated | M001/S05 | none | Verified in tests/engine/Reconciler.test.ts using Vitest fake timers to prove that commands are consistently spaced by at least 50ms, preventing mesh saturation. |
-| R007 | compliance/security | active | M001/S11 | none | mapped |
+| R007 | compliance/security | validated | M001/S11 | none | Verified by prepublish script in M001/S11 which enforces 8-bit PNG depth and cloud exclusion in app.json metadata. |
+| R008 | compliance/security | validated | none | none | package.json engine constraint lowered to >=20.0.0; npm run build and npm run test pass. |
+| R009 | quality-attribute | validated | none | none | Verified in tests/engine/Reconciler.test.ts where a single-retry path (default 200ms) handles transient setCapability failures, correctly populating applied[] on success and failed[] on persistent failure, while preserving the 50ms mesh pacing delay. Implementation in Reconciler.ts uses a configurable retryDelayMs and a setCapabilityWithRetry helper. |
+| R010 | quality-attribute | validated | none | none | Verified in S03 (tests/api/AppInit.test.ts) where MyApp.onInit() now eagerly validates the stored configuration via Zod. The app refuses to initialize flow cards or start the engine if the config is missing or malformed, ensuring that the 'getConfig()' boundary always serves valid data to the rest of the application. |
+| R011 | quality-attribute | validated | none | none | Implemented a deterministic type-priority tiebreak (time > solar > lux) in PhaseEngine.evaluatePhaseConditions. Verified by 4 new unit tests in tests/engine/PhaseEngine.test.ts proving that time beats solar/lux and solar beats lux at identical eventTimes, while earliest timestamp still wins in non-tie scenarios. |
 
 ## Coverage Summary
 
-- Active requirements: 1
-- Mapped to slices: 1
-- Validated: 6 (R001, R002, R003, R004, R005, R006)
+- Active requirements: 0
+- Mapped to slices: 0
+- Validated: 11 (R001, R002, R003, R004, R005, R006, R007, R008, R009, R010, R011)
 - Unmapped active requirements: 0

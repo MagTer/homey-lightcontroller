@@ -15,6 +15,7 @@ import type {
   DeviceState,
   RoleDeviceMapping,
   Capability,
+  CapabilityValue,
 } from './DeviceAPI.js';
 import type {
   ReconcileResult,
@@ -32,6 +33,8 @@ export interface ReconcilerOptions {
   meshDelayMs?: number;
   /** Epsilon for floating-point dim comparison (default: 0.01) */
   dimEpsilon?: number;
+  /** Delay before single retry on transient failure (default: 200) */
+  retryDelayMs?: number;
 }
 
 /**
@@ -56,6 +59,7 @@ export class Reconciler {
   private deviceApi: DeviceAPI;
   private meshDelayMs: number;
   private dimEpsilon: number;
+  private retryDelayMs: number;
 
   private currentPhase: Phase | null = null;
   private lastAppSetState: Map<string, TrackedDeviceState> = new Map();
@@ -71,6 +75,7 @@ export class Reconciler {
     this.deviceApi = deviceApi;
     this.meshDelayMs = options.meshDelayMs ?? 50;
     this.dimEpsilon = options.dimEpsilon ?? 0.01;
+    this.retryDelayMs = options.retryDelayMs ?? 200;
   }
 
   /**
@@ -183,7 +188,7 @@ export class Reconciler {
   ): Promise<void> {
     // Handle onoff capability (always present)
     try {
-      await this.deviceApi.setCapability(deviceId, 'onoff', targetState.onoff);
+      await this.setCapabilityWithRetry(deviceId, 'onoff', targetState.onoff);
       this.updateLastAppSetState(deviceId, 'onoff', targetState.onoff);
       applied.push({
         deviceId,
@@ -209,7 +214,7 @@ export class Reconciler {
     // Handle dim capability (only if defined in target)
     if (targetState.dim !== undefined) {
       try {
-        await this.deviceApi.setCapability(deviceId, 'dim', targetState.dim);
+        await this.setCapabilityWithRetry(deviceId, 'dim', targetState.dim);
         this.updateLastAppSetState(deviceId, 'dim', targetState.dim);
         applied.push({
           deviceId,
@@ -379,7 +384,7 @@ export class Reconciler {
     // Update onoff if needed
     if (currentState.onoff !== targetState.onoff) {
       try {
-        await this.deviceApi.setCapability(deviceId, 'onoff', targetState.onoff);
+        await this.setCapabilityWithRetry(deviceId, 'onoff', targetState.onoff);
         this.updateLastAppSetState(deviceId, 'onoff', targetState.onoff);
         applied.push({
           deviceId,
@@ -406,7 +411,7 @@ export class Reconciler {
     // Update dim if needed and defined in target
     if (targetState.dim !== undefined && currentState.dim !== targetState.dim) {
       try {
-        await this.deviceApi.setCapability(deviceId, 'dim', targetState.dim);
+        await this.setCapabilityWithRetry(deviceId, 'dim', targetState.dim);
         this.updateLastAppSetState(deviceId, 'dim', targetState.dim);
         applied.push({
           deviceId,
@@ -451,5 +456,32 @@ export class Reconciler {
    */
   private async delay(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, this.meshDelayMs));
+  }
+
+  /**
+   * Applies the configured retry delay before a single retry attempt.
+   */
+  private async retryDelay(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, this.retryDelayMs));
+  }
+
+  /**
+   * Attempts to set a device capability, retrying once on transient failure.
+   * The second-attempt error is what surfaces in FailedReconcileEntry if both
+   * attempts fail; the first error is intentionally swallowed.
+   */
+  private async setCapabilityWithRetry<T extends 'onoff' | 'dim'>(
+    deviceId: string,
+    capability: T,
+    value: CapabilityValue<T>
+  ): Promise<void> {
+    try {
+      await this.deviceApi.setCapability(deviceId, capability, value);
+    } catch (firstError) {
+      await this.retryDelay();
+      // Second attempt — if this also fails the error propagates to the
+      // enclosing try/catch which records it in failed[] with this message.
+      await this.deviceApi.setCapability(deviceId, capability, value);
+    }
   }
 }
