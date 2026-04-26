@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T01",
+  "unitId": "M001/S07/T01",
+  "timestamp": 1777198275184,
+  "passed": true,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "npx tsc --noEmit",
+      "exitCode": 0,
+      "durationMs": 2409,
+      "verdict": "pass"
+    },
+    {
+      "command": "npx vitest run",
+      "exitCode": 0,
+      "durationMs": 1416,
+      "verdict": "pass"
+    }
+  ]
+}

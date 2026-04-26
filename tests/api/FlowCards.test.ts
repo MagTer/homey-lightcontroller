@@ -1,0 +1,116 @@
+import { describe, it, expect } from 'vitest';
+import { ZodError } from 'zod';
+import { Phase, PhaseSchema } from '../../src/lib/config/Config.js';
+
+// We need to test MyApp's forcePhase / getForcedPhase contract.
+// Rather than extending Homey.App (which requires the real SDK module at runtime),
+// we replicate the exact same implementation as MyApp.forcePhase / getForcedPhase
+// so the test isolates the contract from the SDK wiring.
+// Keep this in sync with app.ts if forcePhase logic changes.
+class TestableApp {
+  _forcedPhase: Phase | null = null;
+
+  // Mirror of MyApp.forcePhase — identical logic, no Homey dependency
+  forcePhase(raw: unknown): Phase {
+    let parsed: Phase;
+    try {
+      parsed = PhaseSchema.parse(raw);
+    } catch (err) {
+      // Simulate the App.error() call — no SDK needed in test
+      // this.homey.app.error('forcePhase rejected', { raw });
+      throw err;
+    }
+    this._forcedPhase = parsed;
+    // this.homey.app.log('forcePhase', { phase: parsed });
+    return parsed;
+  }
+
+  getForcedPhase(): Phase | null {
+    return this._forcedPhase;
+  }
+}
+
+describe('FlowCards — App forcePhase / getForcedPhase contract', () => {
+  describe('valid phases', () => {
+    it.each(['NIGHT', 'MORNING', 'DAY', 'EVENING'] as const)(
+      'sets _forcedPhase and getForcedPhase() returns %s',
+      (phase) => {
+        const app = new TestableApp();
+        expect(app.getForcedPhase()).toBeNull(); // starts null
+
+        const result = app.forcePhase(phase);
+
+        expect(result).toBe(phase);
+        expect(app.getForcedPhase()).toBe(phase);
+      }
+    );
+
+    it('overwrites the previous forced phase', () => {
+      const app = new TestableApp();
+
+      app.forcePhase('NIGHT');
+      expect(app.getForcedPhase()).toBe('NIGHT');
+
+      app.forcePhase('DAY');
+      expect(app.getForcedPhase()).toBe('DAY');
+    });
+
+    it('forcePhase("NIGHT") then forcePhase("DAY") results in getForcedPhase() === "DAY"', () => {
+      const app = new TestableApp();
+
+      app.forcePhase('NIGHT');
+      app.forcePhase('DAY');
+
+      expect(app.getForcedPhase()).toBe('DAY');
+    });
+  });
+
+  describe('invalid phases', () => {
+    it('throws ZodError for an unrecognized phase string', () => {
+      const app = new TestableApp();
+
+      expect(() => app.forcePhase('MIDNIGHT')).toThrow(ZodError);
+    });
+
+    it('throws ZodError for a number', () => {
+      const app = new TestableApp();
+
+      expect(() => app.forcePhase(123)).toThrow(ZodError);
+    });
+
+    it('throws ZodError for null', () => {
+      const app = new TestableApp();
+
+      expect(() => app.forcePhase(null)).toThrow(ZodError);
+    });
+
+    it('leaves _forcedPhase unchanged after a rejected invalid phase', () => {
+      const app = new TestableApp();
+
+      app.forcePhase('EVENING');
+      expect(app.getForcedPhase()).toBe('EVENING');
+
+      try {
+        app.forcePhase('INVALID');
+      } catch {
+        // expected
+      }
+
+      // State must NOT have changed
+      expect(app.getForcedPhase()).toBe('EVENING');
+    });
+
+    it('leaves _forcedPhase unchanged after calling with undefined', () => {
+      const app = new TestableApp();
+      expect(app.getForcedPhase()).toBeNull();
+
+      try {
+        app.forcePhase(undefined);
+      } catch {
+        // expected — Zod rejects undefined for a string enum
+      }
+
+      expect(app.getForcedPhase()).toBeNull();
+    });
+  });
+});

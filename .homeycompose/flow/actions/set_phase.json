@@ -1,0 +1,41 @@
+{
+  "id": "set_phase",
+  "title": {
+    "en": "Set Phase"
+  },
+  "titleFormatted": {
+    "en": "Set Phase to [[phase]]"
+  },
+  "args": [
+    {
+      "name": "phase",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "NIGHT",
+          "label": {
+            "en": "Night"
+          }
+        },
+        {
+          "id": "MORNING",
+          "label": {
+            "en": "Morning"
+          }
+        },
+        {
+          "id": "DAY",
+          "label": {
+            "en": "Day"
+          }
+        },
+        {
+          "id": "EVENING",
+          "label": {
+            "en": "Evening"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "taskId": "T02",
+  "unitId": "M001/S07/T02",
+  "timestamp": 1777198387947,
+  "passed": false,
+  "discoverySource": "task-plan",
+  "checks": [
+    {
+      "command": "npx tsc --noEmit",
+      "exitCode": 0,
+      "durationMs": 2431,
+      "verdict": "pass"
+    },
+    {
+      "command": "npx vitest run",
+      "exitCode": 0,
+      "durationMs": 1411,
+      "verdict": "pass"
+    },
+    {
+      "command": "npx homey app validate --level publish",
+      "exitCode": 1,
+      "durationMs": 3676,
+      "verdict": "fail"
+    }
+  ],
+  "retryAttempt": 1,
+  "maxRetries": 2
+}

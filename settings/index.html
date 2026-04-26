@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Light Controller Settings</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 16px;
+      color: #333;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .section { margin-bottom: 1.5rem; }
+    .roles-list { display: flex; flex-direction: column; gap: 12px; }
+    .role-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      background: #fafafa;
+    }
+    .role-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .role-header label { font-weight: 600; min-width: 60px; }
+    .role-header input { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .remove-btn {
+      padding: 4px 12px;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .remove-btn:hover { background: #c82333; }
+    .devices-scroll {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fff;
+    }
+    .device-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+    .device-item input[type="checkbox"] { width: 18px; height: 18px; }
+    .device-item label { cursor: pointer; }
+    .add-btn, .save-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .add-btn {
+      background: #6c757d;
+      color: #fff;
+    }
+    .add-btn:hover { background: #5a6268; }
+    .save-btn {
+      background: #28a745;
+      color: #fff;
+    }
+    .save-btn:hover { background: #218838; }
+    .save-btn:disabled {
+      background: #94d3a2;
+      cursor: not-allowed;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 1rem;
+    }
+    .loading, .error {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+    .loading { background: #e7f3ff; border: 1px solid #b8daff; color: #004085; }
+    .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+  </style>
+</head>
+<body>
+  <h1>Light Controller Settings</h1>
+  <div id="status"></div>
+  <div id="app">
+    <div class="section">
+      <h2>Roles</h2>
+      <p>Assign devices to each role. Devices without the on/off capability are hidden.</p>
+      <div id="roles-list" class="roles-list"></div>
+      <button type="button" class="add-btn" id="add-role-btn">+ Add Role</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="save-btn" id="save-btn">Save</button>
+    </div>
+  </div>
+
+  <script>
+    // Default phase config — used when creating a new config or filling missing phases.
+    // Each phase has placeholder time conditions (12:00 for all) and onoff:false states for all roles.
+    function buildDefaultPhases(roleIds) {
+      const defaultConditions = (time) => [{ type: 'time', at: time }];
+      const makeSchedule = (time) => ({ conditions: defaultConditions(time) });
+      const makeStates = () => {
+        const states = {};
+        roleIds.forEach((id) => { states[id] = { onoff: false }; });
+        return states;
+      };
+      return {
+        NIGHT: { weekday: makeSchedule('00:00'), weekend: makeSchedule('00:00'), states: makeStates() },
+        MORNING: { weekday: makeSchedule('06:00'), weekend: makeSchedule('07:00'), states: makeStates() },
+        DAY: { weekday: makeSchedule('09:00'), weekend: makeSchedule('10:00'), states: makeStates() },
+        EVENING: { weekday: makeSchedule('18:00'), weekend: makeSchedule('17:00'), states: makeStates() }
+      };
+    }
+
+    // Slugify a string to a role id (lowercase, hyphenated, alphanumeric).
+    function toRoleSlug(name) {
+      return name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'role';
+    }
+
+    // Render the roles list into the DOM.
+    function renderRoles(roles, devices, container) {
+      container.innerHTML = '';
+      roles.forEach((role, idx) => {
+        const card = document.createElement('div');
+        card.className = 'role-card';
+        card.dataset.idx = idx;
+        card.innerHTML = `
+          <div class="role-header">
+            <label for="role-name-${idx}">Name:</label>
+            <input type="text" id="role-name-${idx}" value="${escHtml(role.name)}" placeholder="Role name" data-field="name">
+            <input type="hidden" value="${escHtml(role.id)}" data-field="id">
+            <button type="button" class="remove-btn" data-action="remove">Remove</button>
+          </div>
+          <div>
+            <strong>Devices:</strong>
+            <div class="devices-scroll">
+              ${devices.map((d) => `
+                <div class="device-item">
+                  <input type="checkbox" id="dev-${idx}-${escHtml(d.id)}" value="${escHtml(d.id)}"
+                    ${(role.devices || []).includes(d.id) ? ' checked' : ''}
+                    data-role-idx="${idx}" data-device-id="${escHtml(d.id)}">
+                  <label for="dev-${idx}-${escHtml(d.id)}">${escHtml(d.name)}</label>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Escape HTML entities to prevent XSS.
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Collect current form state into an AppConfig-shaped object.
+    function collectConfig() {
+      const cards = document.querySelectorAll('.role-card');
+      const roles = [];
+      cards.forEach((card) => {
+        const name = card.querySelector('[data-field="name"]').value.trim();
+        const id = card.querySelector('[data-field="id"]').value;
+        // Collect checked device IDs for this role.
+        const devices = [];
+        card.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+          devices.push(cb.dataset.deviceId);
+        });
+        roles.push({ id, name, devices });
+      });
+
+      // Build default phases using the collected role ids.
+      const roleIds = roles.map((r) => r.id);
+      const phases = buildDefaultPhases(roleIds);
+
+      return {
+        version: '1.0',
+        roles,
+        phases
+      };
+    }
+
+    function onHomeyReady(Homey) {
+      Homey.ready();
+
+      const statusEl = document.getElementById('status');
+      const rolesListEl = document.getElementById('roles-list');
+      const addRoleBtn = document.getElementById('add-role-btn');
+      const saveBtn = document.getElementById('save-btn');
+      const appEl = document.getElementById('app');
+
+      let saving = false;
+
+      function setStatus(msg, type) {
+        statusEl.innerHTML = `<div class="${type}">${msg}</div>`;
+      }
+
+      function showLoading() {
+        setStatus('Loading devices and config…', 'loading');
+        appEl.style.opacity = '0.5';
+        appEl.style.pointerEvents = 'none';
+      }
+
+      function hideLoading() {
+        statusEl.innerHTML = '';
+        appEl.style.opacity = '';
+        appEl.style.pointerEvents = '';
+      }
+
+      // Load config and devices in parallel.
+      Promise.all([
+        Homey.api('GET', '/getConfig'),
+        Homey.api('GET', '/getDevices')
+      ])
+        .then(([config, deviceCreds]) => {
+          // Fetch device list from Homey API using owner token.
+          return fetch(`${deviceCreds.localUrl}/api/v2/devices`, {
+            headers: { Authorization: `Bearer ${deviceCreds.token}` }
+          })
+            .then((res) => {
+              if (!res.ok) throw new Error(`Device API error: ${res.status}`);
+              return res.json();
+            })
+            .then((data) => {
+              // Filter to devices with onoff capability.
+              const onoffDevices = (data.data || []).filter((d) =>
+                (d.capabilities || []).includes('onoff')
+              );
+              return { config, onoffDevices };
+            });
+        })
+        .then(({ config, onoffDevices }) => {
+          hideLoading();
+
+          // Parse roles from config — NIGHT phase states hold role definitions.
+          let roles = [];
+          if (config && config.phases && config.phases.NIGHT && config.phases.NIGHT.states) {
+            roles = Object.keys(config.phases.NIGHT.states).map((id) => {
+              const existingRole = (config.roles || []).find((r) => r.id === id);
+              return {
+                id,
+                name: existingRole ? existingRole.name : id,
+                devices: existingRole && existingRole.devices ? existingRole.devices : []
+              };
+            });
+          }
+
+          renderRoles(roles, onoffDevices, rolesListEl);
+          window.__roles = roles;
+          window.__onoffDevices = onoffDevices;
+        })
+        .catch((err) => {
+          hideLoading();
+          setStatus('Failed to load: ' + err.message, 'error');
+        });
+
+      // Add a new blank role.
+      addRoleBtn.addEventListener('click', () => {
+        const roles = window.__roles || [];
+        const devices = window.__onoffDevices || [];
+        // Generate a tentative id from a placeholder name; user will rename.
+        const tempName = 'New Role';
+        const tempId = toRoleSlug(tempName) + '-' + Date.now();
+        roles.push({ id: tempId, name: tempName, devices: [] });
+        window.__roles = roles;
+        renderRoles(roles, devices, rolesListEl);
+      });
+
+      // Remove a role by clicking its Remove button.
+      rolesListEl.addEventListener('click', (e) => {
+        if (e.target.dataset.action !== 'remove') return;
+        const card = e.target.closest('.role-card');
+        const idx = parseInt(card.dataset.idx, 10);
+        const roles = window.__roles || [];
+        const devices = window.__onoffDevices || [];
+        roles.splice(idx, 1);
+        window.__roles = roles;
+        renderRoles(roles, devices, rolesListEl);
+      });
+
+      // Keep role id stable once assigned; only update name unless id is still the temp form.
+      rolesListEl.addEventListener('input', (e) => {
+        if (e.target.dataset.field !== 'name') return;
+        const card = e.target.closest('.role-card');
+        const idx = parseInt(card.dataset.idx, 10);
+        const roles = window.__roles || [];
+        const newName = e.target.value.trim();
+        // If the id still looks like a temp id (contains a timestamp segment), reassign.
+        if (roles[idx].id.match(/-\d+$/)) {
+          roles[idx].id = toRoleSlug(newName);
+        }
+        roles[idx].name = newName;
+        window.__roles = roles;
+      });
+
+      // Save button handler.
+      saveBtn.addEventListener('click', async () => {
+        if (saving) return;
+        saving = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+
+        const config = collectConfig();
+
+        try {
+          await Homey.api('POST', '/saveConfig', config);
+          Homey.alert('Saved!');
+        } catch (err) {
+          Homey.alert('Save failed: ' + err.message);
+        } finally {
+          saving = false;
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

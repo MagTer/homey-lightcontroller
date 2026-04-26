@@ -1,0 +1,15 @@
+{
+  "id": "phase_changed",
+  "title": {
+    "en": "Phase Changed"
+  },
+  "tokens": [
+    {
+      "name": "phase",
+      "type": "string",
+      "title": {
+        "en": "Phase"
+      }
+    }
+  ]
+}
