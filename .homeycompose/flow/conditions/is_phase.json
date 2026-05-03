@@ -1,0 +1,23 @@
+{
+  "id": "is_phase",
+  "title": {
+    "en": "The lighting phase !{{is|isn't}} ...",
+    "sv": "Belysningsfasen !{{är|inte är}} ..."
+  },
+  "titleFormatted": {
+    "en": "The lighting phase !{{is|isn't}} [[phase]]",
+    "sv": "Belysningsfasen !{{är|inte är}} [[phase]]"
+  },
+  "args": [
+    {
+      "name": "phase",
+      "type": "dropdown",
+      "values": [
+        { "id": "NIGHT", "label": { "en": "Night", "sv": "Natt" } },
+        { "id": "MORNING", "label": { "en": "Morning", "sv": "Morgon" } },
+        { "id": "DAY", "label": { "en": "Day", "sv": "Dag" } },
+        { "id": "EVENING", "label": { "en": "Evening", "sv": "Kväll" } }
+      ]
+    }
+  ]
+}

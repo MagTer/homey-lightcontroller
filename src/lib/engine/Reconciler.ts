@@ -9,7 +9,7 @@
  * - Structured per-tick results for diagnostic visibility
  */
 
-import type { Phase, AppConfig, RoleState } from '../config/Config.js';
+import type { Phase, AppConfig, RoleState, DimmingConfig } from '../config/Config.js';
 import type {
   DeviceAPI,
   DeviceState,
@@ -24,6 +24,7 @@ import type {
   FailedReconcileEntry,
   NoOpReconcileEntry,
 } from './ReconcilerTypes.js';
+import { luxToDim } from './DimmingCurve.js';
 
 /**
  * Options for Reconciler configuration.
@@ -35,6 +36,8 @@ export interface ReconcilerOptions {
   dimEpsilon?: number;
   /** Delay before single retry on transient failure (default: 200) */
   retryDelayMs?: number;
+  /** Provider for smoothed lux value, used when a role has dynamic dimming config */
+  luxProvider?: () => number | null;
 }
 
 /**
@@ -60,6 +63,7 @@ export class Reconciler {
   private meshDelayMs: number;
   private dimEpsilon: number;
   private retryDelayMs: number;
+  private luxProvider: (() => number | null) | undefined;
 
   private currentPhase: Phase | null = null;
   private lastAppSetState: Map<string, TrackedDeviceState> = new Map();
@@ -76,6 +80,7 @@ export class Reconciler {
     this.meshDelayMs = options.meshDelayMs ?? 50;
     this.dimEpsilon = options.dimEpsilon ?? 0.01;
     this.retryDelayMs = options.retryDelayMs ?? 200;
+    this.luxProvider = options.luxProvider;
   }
 
   /**
@@ -85,6 +90,27 @@ export class Reconciler {
    */
   getLastResult(): ReconcileResult | null {
     return this.lastResult;
+  }
+
+  /**
+   * Resolves a RoleState, computing dynamic dim if a dimming config is present.
+   * Falls back to static dim when lux is unavailable or dimming is not configured.
+   */
+  private resolveTargetState(raw: RoleState): RoleState {
+    if (!raw.dimming) return raw;
+
+    const lux = this.luxProvider ? this.luxProvider() : null;
+    if (lux === null) return { onoff: raw.onoff, dim: raw.dim };
+
+    const computedDim = luxToDim({
+      lux,
+      brightLux: raw.dimming.brightLux,
+      darkLux: raw.dimming.darkLux,
+      brightDim: raw.dimming.brightDim,
+      darkDim: raw.dimming.darkDim,
+    });
+
+    return { onoff: raw.onoff, dim: computedDim };
   }
 
   /**
@@ -121,7 +147,8 @@ export class Reconciler {
     const roleStates = phaseConfig.states;
 
     // Process each role in the phase configuration
-    for (const [roleId, targetState] of Object.entries(roleStates)) {
+    for (const [roleId, rawTargetState] of Object.entries(roleStates)) {
+      const targetState = this.resolveTargetState(rawTargetState);
       const deviceIds = roleDeviceMapping[roleId] ?? [];
 
       // Process each device assigned to this role

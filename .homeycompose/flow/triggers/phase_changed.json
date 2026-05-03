@@ -1,14 +1,24 @@
 {
   "id": "phase_changed",
   "title": {
-    "en": "Phase Changed"
+    "en": "Phase Changed",
+    "sv": "Belysningsfasen ändrades"
   },
   "tokens": [
     {
       "name": "phase",
       "type": "string",
       "title": {
-        "en": "Phase"
+        "en": "Phase",
+        "sv": "Fas"
+      }
+    },
+    {
+      "name": "previous_phase",
+      "type": "string",
+      "title": {
+        "en": "Previous Phase",
+        "sv": "Föregående fas"
       }
     }
   ]

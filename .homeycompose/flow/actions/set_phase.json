@@ -1,10 +1,12 @@
 {
   "id": "set_phase",
   "title": {
-    "en": "Set Phase"
+    "en": "Set Phase",
+    "sv": "Sätt belysningsfas"
   },
   "titleFormatted": {
-    "en": "Set Phase to [[phase]]"
+    "en": "Set Phase to [[phase]]",
+    "sv": "Sätt belysningsfasen till [[phase]]"
   },
   "args": [
     {
@@ -14,25 +16,29 @@
         {
           "id": "NIGHT",
           "label": {
-            "en": "Night"
+            "en": "Night",
+            "sv": "Natt"
           }
         },
         {
           "id": "MORNING",
           "label": {
-            "en": "Morning"
+            "en": "Morning",
+            "sv": "Morgon"
           }
         },
         {
           "id": "DAY",
           "label": {
-            "en": "Day"
+            "en": "Day",
+            "sv": "Dag"
           }
         },
         {
           "id": "EVENING",
           "label": {
-            "en": "Evening"
+            "en": "Evening",
+            "sv": "Kväll"
           }
         }
       ]

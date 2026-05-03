@@ -28,7 +28,7 @@ const validConfig = {
       states: { living: { onoff: true, dim: 0.8 } }
     }
   }
-} as const;
+};
 
 describe('ConfigParser', () => {
   it('parses a fully valid config into a typed AppConfig', () => {
@@ -38,22 +38,19 @@ describe('ConfigParser', () => {
 
   it('throws ConfigValidationError when a phase key is missing', () => {
     const broken = clone(validConfig);
-    // @ts-expect-error - intentionally deleting for test
-    delete broken.phases.EVENING;
+    delete (broken as any).phases.EVENING;
     expect(() => parseConfig(broken)).toThrow(ConfigValidationError);
   });
 
   it('rejects invalid time strings like 25:99', () => {
     const broken = clone(validConfig);
-    // @ts-expect-error - intentionally setting invalid time
-    broken.phases.MORNING.weekday.conditions[0] = { type: 'time', at: '25:99' };
+    (broken as any).phases.MORNING.weekday.conditions[0] = { type: 'time', at: '25:99' };
     expect(() => parseConfig(broken)).toThrow(ConfigValidationError);
   });
 
   it('rejects malformed conditions (unknown solar event)', () => {
     const broken = clone(validConfig);
-    // @ts-expect-error - intentionally setting invalid solar event
-    broken.phases.MORNING.weekend.conditions[0] = { type: 'solar', event: 'midnight', offsetMinutes: 0 };
+    (broken as any).phases.MORNING.weekend.conditions[0] = { type: 'solar', event: 'midnight', offsetMinutes: 0 };
     expect(() => parseConfig(broken)).toThrow(ConfigValidationError);
   });
 
@@ -63,5 +60,64 @@ describe('ConfigParser', () => {
     if (!result.ok) {
       expect(result.error).toBeInstanceOf(ConfigValidationError);
     }
+  });
+
+  it('accepts sensors field', () => {
+    const withSensors = {
+      ...clone(validConfig),
+      sensors: {
+        outdoor: 'sensor-outdoor-id',
+        indoor_downstairs: 'sensor-down-id',
+        indoor_upstairs: 'sensor-up-id',
+      }
+    };
+    const result = parseConfig(withSensors);
+    expect(result.sensors).toEqual(withSensors.sensors);
+  });
+
+  it('accepts optional sensors and partial sensors', () => {
+    const partial = {
+      ...clone(validConfig),
+      sensors: { outdoor: 'only-outdoor' }
+    };
+    const result = parseConfig(partial);
+    expect(result.sensors).toEqual({ outdoor: 'only-outdoor' });
+  });
+
+  it('accepts dimming config in role state', () => {
+    const withDimming = clone(validConfig);
+    (withDimming as any).phases.MORNING.states.living = {
+      onoff: true,
+      dimming: {
+        source: 'indoor_downstairs',
+        brightLux: 100,
+        darkLux: 20,
+        brightDim: 0,
+        darkDim: 0.4,
+      }
+    };
+    const result = parseConfig(withDimming);
+    expect(result.phases.MORNING.states.living.dimming).toEqual({
+      source: 'indoor_downstairs',
+      brightLux: 100,
+      darkLux: 20,
+      brightDim: 0,
+      darkDim: 0.4,
+    });
+  });
+
+  it('rejects invalid dimming source', () => {
+    const bad = clone(validConfig);
+    (bad as any).phases.MORNING.states.living = {
+      onoff: true,
+      dimming: {
+        source: 'outdoor',
+        brightLux: 100,
+        darkLux: 20,
+        brightDim: 0,
+        darkDim: 0.4,
+      }
+    };
+    expect(() => parseConfig(bad)).toThrow(ConfigValidationError);
   });
 });

@@ -6,6 +6,7 @@ node_modules/
 tests/
 test/
 test-app/
+__mocks__/
 *.test.ts
 vitest.config.ts
 
@@ -16,6 +17,7 @@ vitest.config.ts
 # GSD / planning
 .gsd/
 .gsd-id
+.bg-shell/
 
 # Build / dev scripts
 scripts/
@@ -28,3 +30,4 @@ tsconfig.json
 api.js.bak
 test-holidays.js
 test-suncalc.js
+dummy-create/

@@ -110,10 +110,32 @@ export default class MyApp extends Homey.App {
    * Single evaluation tick: checks phase transitions and applies them.
    * Respects forced-phase override when set.
    */
+  private async _readLuxSensors(config: AppConfig, now: Date): Promise<void> {
+    const sensors = config.sensors;
+    if (!sensors) return;
+
+    for (const [sensorKey, deviceId] of Object.entries(sensors)) {
+      if (!deviceId) continue;
+      try {
+        const device = await (this.homey.api as any).devices.getDevice({ id: deviceId });
+        const lux = device.capabilitiesObj?.measure_luminance?.value;
+        if (typeof lux === 'number' && Number.isFinite(lux)) {
+          this._luxAggregator.recordReading(deviceId, lux, now);
+        } else {
+          this.log('lux sensor non-numeric reading', { sensor: sensorKey, deviceId, lux });
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.error('lux sensor read failed', { sensor: sensorKey, deviceId, message });
+      }
+    }
+  }
+
   private async _tick(): Promise<void> {
     const config = this.getConfig();
     if (!config) return;
 
+    const now = new Date();
     const store = this.homey.settings as unknown as SettingsStore;
     let currentPhase: Phase | null = store.get('currentPhase') as Phase | null;
     const lastEvalTimeStr = store.get('lastEvalTime') as string | null;
@@ -123,13 +145,16 @@ export default class MyApp extends Homey.App {
     }
     const lastEvalTime = lastEvalTimeStr ? new Date(lastEvalTimeStr) : new Date(0);
 
+    // Read lux sensors before evaluation
+    await this._readLuxSensors(config, now);
+
     // If a phase is forced, apply it immediately and skip automatic evaluation
     if (this._forcedPhase !== null) {
       if (this._forcedPhase !== currentPhase) {
         this.log('forced phase override', { from: currentPhase, to: this._forcedPhase });
         await this._applyPhase(this._forcedPhase, config);
         store.set('currentPhase', this._forcedPhase);
-        store.set('lastEvalTime', new Date().toISOString());
+        store.set('lastEvalTime', now.toISOString());
       }
       return;
     }
@@ -137,7 +162,7 @@ export default class MyApp extends Homey.App {
     const geo = this.homey.geolocation;
     const ctx = buildEvaluationContext({
       aggregator: this._luxAggregator,
-      now: new Date(),
+      now,
       latitude: geo.getLatitude(),
       longitude: geo.getLongitude(),
       countryCode: '',
@@ -163,7 +188,9 @@ export default class MyApp extends Homey.App {
 
     // Create device API and reconciler
     const deviceApi = new HomeyDeviceAPI(this.homey);
-    this._reconciler = new Reconciler(deviceApi);
+    this._reconciler = new Reconciler(deviceApi, {
+      luxProvider: () => this._luxAggregator.getSmoothedLux(),
+    });
 
     // Register Flow action card
     this.homey.flow
@@ -171,6 +198,15 @@ export default class MyApp extends Homey.App {
       .registerRunListener(async (args: { phase: Phase }) => {
         this.forcePhase(args.phase);
         return true;
+      });
+
+    // Register Flow condition card
+    this.homey.flow
+      .getConditionCard('is_phase')
+      .registerRunListener(async (args: { phase: Phase }) => {
+        const store = this.homey.settings as unknown as SettingsStore;
+        const currentPhase = store.get('currentPhase') as Phase | null;
+        return currentPhase === args.phase;
       });
 
     // Register Flow trigger card

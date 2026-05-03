@@ -114,3 +114,33 @@ describe('FlowCards — App forcePhase / getForcedPhase contract', () => {
     });
   });
 });
+
+// is_phase condition card logic — mirrors app.ts registerRunListener
+function isPhaseCondition(currentPhase: Phase | null, argsPhase: Phase): boolean {
+  return currentPhase === argsPhase;
+}
+
+describe('FlowCards — is_phase condition', () => {
+  it('returns true when current phase matches args phase', () => {
+    expect(isPhaseCondition('MORNING', 'MORNING')).toBe(true);
+    expect(isPhaseCondition('NIGHT', 'NIGHT')).toBe(true);
+  });
+
+  it('returns false when current phase differs', () => {
+    expect(isPhaseCondition('MORNING', 'DAY')).toBe(false);
+    expect(isPhaseCondition('EVENING', 'NIGHT')).toBe(false);
+  });
+
+  it('returns false when current phase is null', () => {
+    expect(isPhaseCondition(null, 'DAY')).toBe(false);
+    expect(isPhaseCondition(null, 'NIGHT')).toBe(false);
+  });
+
+  it('handles all four phases correctly', () => {
+    const phases: Phase[] = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+    for (const p of phases) {
+      expect(isPhaseCondition(p, p)).toBe(true);
+      expect(isPhaseCondition(p, phases.find((x) => x !== p)!)).toBe(false);
+    }
+  });
+});

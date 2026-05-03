@@ -42,9 +42,19 @@ export const PhaseScheduleSchema = z.object({
 });
 export type PhaseSchedule = z.infer<typeof PhaseScheduleSchema>;
 
+export const DimmingConfigSchema = z.object({
+  source: z.enum(['indoor_downstairs', 'indoor_upstairs']),
+  brightLux: z.number(),
+  darkLux: z.number(),
+  brightDim: z.number().min(0).max(1),
+  darkDim: z.number().min(0).max(1),
+});
+export type DimmingConfig = z.infer<typeof DimmingConfigSchema>;
+
 export const RoleStateSchema = z.object({
   onoff: z.boolean(),
-  dim: z.number().min(0).max(1).optional()
+  dim: z.number().min(0).max(1).optional(),
+  dimming: DimmingConfigSchema.optional(),
 });
 export type RoleState = z.infer<typeof RoleStateSchema>;
 
@@ -55,6 +65,13 @@ export const PhaseConfigSchema = z.object({
 });
 export type PhaseConfig = z.infer<typeof PhaseConfigSchema>;
 
+export const SensorsSchema = z.object({
+  outdoor: z.string().optional(),
+  indoor_downstairs: z.string().optional(),
+  indoor_upstairs: z.string().optional(),
+}).optional();
+export type SensorsConfig = z.infer<typeof SensorsSchema>;
+
 export const AppConfigSchema = z.object({
   version: z.string().min(1),
   roles: z.array(RoleSchema),
@@ -63,6 +80,7 @@ export const AppConfigSchema = z.object({
     MORNING: PhaseConfigSchema,
     DAY: PhaseConfigSchema,
     EVENING: PhaseConfigSchema
-  })
+  }),
+  sensors: SensorsSchema
 });
 export type AppConfig = z.infer<typeof AppConfigSchema>;

@@ -290,6 +290,68 @@
       border-color: #a5d6a7;
     }
 
+    /* Sensor selects */
+    .sensor-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+    }
+    .sensor-row label {
+      flex: 0 0 180px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #555;
+    }
+    .sensor-row select {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      background: #fff;
+    }
+
+    /* Phase schedule */
+    .phase-schedule-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .phase-schedule-card h4 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      color: #222;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .schedule-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+    }
+    .schedule-row label {
+      flex: 0 0 100px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #666;
+    }
+    .schedule-row input[type="time"] {
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9375rem;
+    }
+    .schedule-hint {
+      font-size: 0.8125rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
     /* Collapsible sections */
     details {
       margin: 0 16px 12px;
@@ -357,6 +419,36 @@
       </div>
     </details>
 
+    <!-- Lux Sensors section -->
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Lux Sensors</legend>
+      <div class="info-box" style="margin: 0 0 12px;">
+        <p>Select lux sensors to enable light-aware transitions and twilight dimming.</p>
+      </div>
+      <div class="sensor-row">
+        <label for="sensor-outdoor">Outdoor lux sensor</label>
+        <select id="sensor-outdoor"><option value="">— None —</option></select>
+      </div>
+      <div class="sensor-row">
+        <label for="sensor-indoor_downstairs">Indoor lux — downstairs</label>
+        <select id="sensor-indoor_downstairs"><option value="">— None —</option></select>
+      </div>
+      <div class="sensor-row">
+        <label for="sensor-indoor_upstairs">Indoor lux — upstairs</label>
+        <select id="sensor-indoor_upstairs"><option value="">— None —</option></select>
+      </div>
+    </fieldset>
+
+    <!-- Phase Schedule section -->
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Phase Schedules</legend>
+      <div class="info-box" style="margin: 0 0 12px;">
+        <p>Adjust when each phase starts. Time conditions are shown below; solar and lux conditions can be edited in the advanced config.</p>
+        <p class="example">💡 Tip: Add a lux condition to MORNING to skip wake-up lights when it's already bright.</p>
+      </div>
+      <div id="phases-schedule"></div>
+    </fieldset>
+
     <!-- Roles section -->
     <fieldset class="homey-form-fieldset">
       <legend class="homey-form-legend">Roles & Devices</legend>
@@ -381,7 +473,7 @@
       };
       return {
         NIGHT:   { weekday: makeSchedule('00:00'), weekend: makeSchedule('00:00'), states: makeStates() },
-        MORNING: { weekday: makeSchedule('06:00'), weekend: makeSchedule('07:00'), states: makeStates() },
+        MORNING: { weekday: makeSchedule('06:30'), weekend: makeSchedule('07:30'), states: makeStates() },
         DAY:     { weekday: makeSchedule('09:00'), weekend: makeSchedule('10:00'), states: makeStates() },
         EVENING: { weekday: makeSchedule('18:00'), weekend: makeSchedule('17:00'), states: makeStates() }
       };
@@ -469,12 +561,34 @@
       });
 
       const roleIds = roles.map((r) => r.id);
-      const phases = buildDefaultPhases(roleIds);
+      // Preserve existing phases and sensors if loaded, otherwise create defaults
+      let phases = window.__existingPhases || buildDefaultPhases(roleIds);
+      // Ensure any new roles get default states in all phases
+      Object.keys(phases).forEach((phaseKey) => {
+        roleIds.forEach((rid) => {
+          if (!phases[phaseKey].states[rid]) {
+            phases[phaseKey].states[rid] = { onoff: false };
+          }
+        });
+        // Remove states for deleted roles
+        Object.keys(phases[phaseKey].states).forEach((rid) => {
+          if (!roleIds.includes(rid)) {
+            delete phases[phaseKey].states[rid];
+          }
+        });
+      });
+
+      const sensors = {};
+      ['outdoor', 'indoor_downstairs', 'indoor_upstairs'].forEach((key) => {
+        const sel = document.getElementById('sensor-' + key);
+        if (sel && sel.value) sensors[key] = sel.value;
+      });
 
       return {
         version: '1.0',
         roles,
-        phases
+        phases,
+        sensors
       };
     }
 
@@ -483,6 +597,87 @@
       const total = card.querySelectorAll('.device-item').length;
       const countEl = card.querySelector('.checked-count');
       if (countEl) countEl.textContent = checked;
+    }
+
+    function renderSensors(devices, sensors) {
+      const luxDevices = devices.filter((d) => d.capabilities && d.capabilities.includes('measure_luminance'));
+      ['outdoor', 'indoor_downstairs', 'indoor_upstairs'].forEach((key) => {
+        const sel = document.getElementById('sensor-' + key);
+        if (!sel) return;
+        const current = sensors && sensors[key] ? sensors[key] : '';
+        let html = '<option value="">— None —</option>';
+        luxDevices.forEach((d) => {
+          html += `<option value="${escHtml(d.id)}"${d.id === current ? ' selected' : ''}>${escHtml(d.name)}</option>`;
+        });
+        sel.innerHTML = html;
+      });
+    }
+
+    function getTimeCondition(conditions) {
+      if (!Array.isArray(conditions)) return null;
+      return conditions.find((c) => c.type === 'time') || null;
+    }
+
+    function renderPhaseSchedule(phases) {
+      const container = document.getElementById('phases-schedule');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+      const phaseLabels = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
+      const phaseColors = { NIGHT: '#1a237e', MORNING: '#f57c00', DAY: '#fdd835', EVENING: '#7b1fa2' };
+
+      phaseOrder.forEach((phase) => {
+        const cfg = phases && phases[phase] ? phases[phase] : { weekday: { conditions: [] }, weekend: { conditions: [] } };
+        const wdTime = getTimeCondition(cfg.weekday && cfg.weekday.conditions);
+        const weTime = getTimeCondition(cfg.weekend && cfg.weekend.conditions);
+
+        const card = document.createElement('div');
+        card.className = 'phase-schedule-card';
+        card.innerHTML = `
+          <h4><span class="dot" style="background:${phaseColors[phase]};width:10px;height:10px;display:inline-block;border-radius:50%;"></span> ${escHtml(phaseLabels[phase])}</h4>
+          <div class="schedule-row">
+            <label>Weekday</label>
+            <input type="time" data-phase="${phase}" data-schedule="weekday" value="${escHtml(wdTime ? wdTime.at : '')}">
+            <span class="schedule-hint">Earliest condition triggers the phase</span>
+          </div>
+          <div class="schedule-row">
+            <label>Weekend</label>
+            <input type="time" data-phase="${phase}" data-schedule="weekend" value="${escHtml(weTime ? weTime.at : '')}">
+            <span class="schedule-hint">Earliest condition triggers the phase</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function collectPhaseSchedule() {
+      const phases = window.__existingPhases || {};
+      const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+      phaseOrder.forEach((phase) => {
+        if (!phases[phase]) {
+          phases[phase] = { weekday: { conditions: [] }, weekend: { conditions: [] }, states: {} };
+        }
+        ['weekday', 'weekend'].forEach((scheduleType) => {
+          const input = document.querySelector(`input[type="time"][data-phase="${phase}"][data-schedule="${scheduleType}"]`);
+          const timeValue = input ? input.value : '';
+          const existing = phases[phase][scheduleType] || { conditions: [] };
+          const conditions = existing.conditions ? [...existing.conditions] : [];
+          const timeIdx = conditions.findIndex((c) => c.type === 'time');
+          if (timeValue) {
+            const timeCond = { type: 'time', at: timeValue };
+            if (timeIdx >= 0) {
+              conditions[timeIdx] = timeCond;
+            } else {
+              conditions.unshift(timeCond);
+            }
+          } else if (timeIdx >= 0) {
+            conditions.splice(timeIdx, 1);
+          }
+          phases[phase][scheduleType] = { conditions };
+        });
+      });
+      return phases;
     }
 
     function onHomeyReady(Homey) {
@@ -518,14 +713,17 @@
         Homey.api('GET', '/config'),
         Homey.api('GET', '/devices')
       ])
-        .then(([config, onoffDevices]) => {
-          return { config, onoffDevices: onoffDevices || [] };
+        .then(([config, allDevices]) => {
+          return { config, allDevices: allDevices || [] };
         })
-        .then(({ config, onoffDevices }) => {
+        .then(({ config, allDevices }) => {
           hideLoading();
 
           let roles = [];
+          let sensors = {};
+          let phases = null;
           if (config && config.phases && config.phases.NIGHT && config.phases.NIGHT.states) {
+            phases = config.phases;
             roles = Object.keys(config.phases.NIGHT.states).map((id) => {
               const existingRole = (config.roles || []).find((r) => r.id === id);
               return {
@@ -534,11 +732,19 @@
                 devices: existingRole && existingRole.devices ? existingRole.devices : []
               };
             });
+            if (config.sensors) sensors = config.sensors;
           }
 
+          const onoffDevices = allDevices.filter((d) => d.capabilities && d.capabilities.includes('onoff'));
           renderRoles(roles, onoffDevices, rolesListEl);
+          renderSensors(allDevices, sensors);
+          renderPhaseSchedule(phases);
+
           window.__roles = roles;
           window.__onoffDevices = onoffDevices;
+          window.__allDevices = allDevices;
+          window.__existingPhases = phases;
+          window.__existingSensors = sensors;
         })
         .catch((err) => {
           hideLoading();
@@ -616,6 +822,8 @@
         const originalText = saveBtn.textContent;
         saveBtn.textContent = 'Saving…';
 
+        // Collect phase schedules from UI before building config
+        window.__existingPhases = collectPhaseSchedule();
         const config = collectConfig();
 
         try {

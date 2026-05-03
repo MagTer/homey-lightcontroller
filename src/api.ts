@@ -43,8 +43,11 @@ export default {
 
       const allDevices: Record<string, any> = await res.json();
       const devices = Object.values(allDevices)
-        .filter((d: any) => Array.isArray(d.capabilities) && d.capabilities.includes('onoff'))
-        .map((d: any) => ({ id: d.id, name: d.name }));
+        .filter((d: any) =>
+          Array.isArray(d.capabilities) &&
+          (d.capabilities.includes('onoff') || d.capabilities.includes('measure_luminance'))
+        )
+        .map((d: any) => ({ id: d.id, name: d.name, capabilities: d.capabilities }));
 
       homey.app.log('api:getDevices ok', { count: devices.length });
       return devices;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Reconciler } from '../../src/lib/engine/Reconciler.js';
 import type { DeviceAPI, DeviceState, RoleDeviceMapping } from '../../src/lib/engine/DeviceAPI.js';
-import type { AppConfig, Phase } from '../../src/lib/config/Config.js';
+import type { AppConfig, Phase, DimmingConfig } from '../../src/lib/config/Config.js';
 import type { ReconcileResult } from '../../src/lib/engine/ReconcilerTypes.js';
 
 /**
@@ -672,6 +672,152 @@ describe('Reconciler', () => {
         (e) => e.deviceId === 'living-light-1' && e.capability === 'onoff'
       );
       expect(living1Applied).toBeDefined();
+    });
+  });
+
+  describe('dynamic dimming via luxProvider', () => {
+    const makeDimmingConfig = (overrides?: Partial<DimmingConfig>): DimmingConfig => ({
+      source: 'indoor_downstairs',
+      brightLux: 100,
+      darkLux: 20,
+      brightDim: 0,
+      darkDim: 0.5,
+      ...overrides,
+    });
+
+    it('computes dim from luxProvider during transition', async () => {
+      const luxProvider = vi.fn().mockReturnValue(60); // midpoint-ish lux
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      config.phases.MORNING.states.living = {
+        onoff: true,
+        dimming: makeDimmingConfig(),
+      };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      // lux=60 between brightLux=100 and darkLux=20 → t=(100-60)/80=0.5 → dim=0.25
+      const living1Dim = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(living1Dim).toBeDefined();
+      expect(living1Dim!.value).toBeCloseTo(0.25, 2);
+      expect(mockApi.getDeviceState('living-light-1')?.dim).toBeCloseTo(0.25, 2);
+    });
+
+    it('uses brightDim when lux >= brightLux', async () => {
+      const luxProvider = vi.fn().mockReturnValue(150);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      config.phases.MORNING.states.living = {
+        onoff: true,
+        dimming: makeDimmingConfig(),
+      };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      const living1Dim = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(living1Dim!.value).toBe(0);
+    });
+
+    it('uses darkDim when lux <= darkLux', async () => {
+      const luxProvider = vi.fn().mockReturnValue(10);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      config.phases.MORNING.states.living = {
+        onoff: true,
+        dimming: makeDimmingConfig(),
+      };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      const living1Dim = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(living1Dim!.value).toBe(0.5);
+    });
+
+    it('falls back to static dim when luxProvider returns null', async () => {
+      const luxProvider = vi.fn().mockReturnValue(null);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      config.phases.MORNING.states.living = {
+        onoff: true,
+        dim: 0.7,
+        dimming: makeDimmingConfig(),
+      };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      const living1Dim = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(living1Dim!.value).toBe(0.7);
+    });
+
+    it('falls back to no dim when luxProvider returns null and no static dim', async () => {
+      const luxProvider = vi.fn().mockReturnValue(null);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      config.phases.MORNING.states.living = {
+        onoff: true,
+        dimming: makeDimmingConfig(),
+      };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      // No dim entry because dim is undefined and lux is null
+      const living1Dim = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(living1Dim).toBeUndefined();
+    });
+
+    it('respects manual override during maintenance with dynamic dimming', async () => {
+      const luxProvider = vi.fn().mockReturnValue(60);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      config.phases.MORNING.states.living = {
+        onoff: true,
+        dimming: makeDimmingConfig(),
+      };
+
+      // Transition to MORNING to establish state
+      let promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      await promise;
+
+      // User manually changes dim
+      mockApi.simulateManualChange('living-light-1', { dim: 0.1 });
+
+      // Maintenance tick
+      promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      const dimSkipped = result.skipped.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(dimSkipped).toBeDefined();
+      expect(dimSkipped!.reason).toBe('override-skip');
     });
   });
 });
