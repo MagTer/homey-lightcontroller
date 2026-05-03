@@ -100,8 +100,12 @@ export default class MyApp extends Homey.App {
   /**
    * Apply a phase: fire the Flow trigger and reconcile devices to the target state.
    */
-  private async _applyPhase(phase: Phase, config: AppConfig): Promise<void> {
-    await this._phaseChangedTrigger.trigger({ phase });
+  private async _applyPhase(
+    phase: Phase,
+    config: AppConfig,
+    previousPhase: Phase | null = null
+  ): Promise<void> {
+    await this._phaseChangedTrigger.trigger({ phase, previous_phase: previousPhase });
     const mapping = this._buildRoleDeviceMapping(config);
     await this._reconciler.reconcile(phase, config, mapping);
   }
@@ -152,7 +156,7 @@ export default class MyApp extends Homey.App {
     if (this._forcedPhase !== null) {
       if (this._forcedPhase !== currentPhase) {
         this.log('forced phase override', { from: currentPhase, to: this._forcedPhase });
-        await this._applyPhase(this._forcedPhase, config);
+        await this._applyPhase(this._forcedPhase, config, currentPhase);
         store.set('currentPhase', this._forcedPhase);
         store.set('lastEvalTime', now.toISOString());
       }
@@ -176,7 +180,7 @@ export default class MyApp extends Homey.App {
         to: result.phase,
         transitions: result.transitions.map((t) => `${t.from}→${t.to}`),
       });
-      await this._applyPhase(result.phase, config);
+      await this._applyPhase(result.phase, config, currentPhase);
     }
 
     store.set('currentPhase', result.phase);

@@ -290,6 +290,107 @@
       border-color: #a5d6a7;
     }
 
+    /* Role phase states */
+    .role-states {
+      padding: 14px 16px;
+      border-top: 1px solid #f0f0f0;
+      background: #fafbfc;
+    }
+    .role-states-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+    }
+    .phase-state-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (min-width: 600px) {
+      .phase-state-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    .phase-state-cell {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .phase-state-cell .phase-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 8px;
+    }
+    .phase-state-cell .phase-label .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .phase-state-cell .state-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .phase-state-cell .state-row label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #666;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
+    }
+    .phase-state-cell input[type="number"] {
+      width: 60px;
+      padding: 4px 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+    }
+    .phase-state-cell input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #00c853;
+    }
+    .dimming-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #e0e0e0;
+    }
+    .dimming-fields .dim-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .dimming-fields .dim-row label {
+      font-size: 0.6875rem;
+      color: #777;
+      flex: 0 0 60px;
+    }
+    .dimming-fields .dim-row input,
+    .dimming-fields .dim-row select {
+      flex: 1;
+      padding: 3px 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 0.75rem;
+    }
+    .dimming-fields .dim-row input[type="number"] {
+      min-width: 0;
+    }
+
     /* Sensor selects */
     .sensor-row {
       display: flex;
@@ -494,7 +595,71 @@
         .replace(/"/g, '&quot;');
     }
 
-    function renderRoles(roles, devices, container) {
+    function cssEscape(str) {
+      // Minimal CSS escape for IDs that may contain special chars
+      return String(str).replace(/([!"#$%&'()*+,.\/;<=>?@[\\\]^`{|}~])/g, '\\$1');
+    }
+
+    function renderRoleStates(role, phases) {
+      const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+      const phaseLabels = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
+      const phaseColors = { NIGHT: '#1a237e', MORNING: '#f57c00', DAY: '#fdd835', EVENING: '#7b1fa2' };
+
+      return phaseOrder.map((phase) => {
+        const state = (phases && phases[phase] && phases[phase].states && phases[phase].states[role.id]) || { onoff: false };
+        const hasDimming = !!state.dimming;
+        const dimValue = hasDimming ? '' : (state.dim !== undefined ? state.dim : '');
+        const dimDisplay = hasDimming ? 'none' : '';
+        const dimmingDisplay = hasDimming ? '' : 'none';
+
+        const d = state.dimming || {};
+
+        return `
+          <div class="phase-state-cell">
+            <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${phaseLabels[phase]}</div>
+            <div class="state-row">
+              <input type="checkbox" id="st-${role.id}-${phase}-onoff" data-role-state="onoff" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${state.onoff ? 'checked' : ''}>
+              <label for="st-${role.id}-${phase}-onoff">On</label>
+            </div>
+            <div class="state-row" style="display:${dimDisplay}">
+              <label>Dim</label>
+              <input type="number" min="0" max="1" step="0.01" value="${dimValue}" data-role-state="dim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+            </div>
+            <div class="state-row">
+              <input type="checkbox" id="st-${role.id}-${phase}-dyn" data-role-state="dynamic" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${hasDimming ? 'checked' : ''}>
+              <label for="st-${role.id}-${phase}-dyn">Auto-dim</label>
+            </div>
+            <div class="dimming-fields" style="display:${dimmingDisplay}">
+              <div class="dim-row">
+                <label>Source</label>
+                <select data-role-state="source" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+                  <option value="indoor_downstairs" ${d.source === 'indoor_downstairs' ? 'selected' : ''}>Downstairs</option>
+                  <option value="indoor_upstairs" ${d.source === 'indoor_upstairs' ? 'selected' : ''}>Upstairs</option>
+                </select>
+              </div>
+              <div class="dim-row">
+                <label>Bright lux</label>
+                <input type="number" min="0" step="1" value="${d.brightLux !== undefined ? d.brightLux : '100'}" data-role-state="brightLux" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+              </div>
+              <div class="dim-row">
+                <label>Dark lux</label>
+                <input type="number" min="0" step="1" value="${d.darkLux !== undefined ? d.darkLux : '20'}" data-role-state="darkLux" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+              </div>
+              <div class="dim-row">
+                <label>Bright dim</label>
+                <input type="number" min="0" max="1" step="0.01" value="${d.brightDim !== undefined ? d.brightDim : '0'}" data-role-state="brightDim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+              </div>
+              <div class="dim-row">
+                <label>Dark dim</label>
+                <input type="number" min="0" max="1" step="0.01" value="${d.darkDim !== undefined ? d.darkDim : '0.35'}" data-role-state="darkDim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderRoles(roles, devices, phases, container) {
       container.innerHTML = '';
 
       if (roles.length === 0) {
@@ -525,6 +690,8 @@
           </div>
         `).join('');
 
+        const statesHtml = renderRoleStates(role, phases);
+
         card.innerHTML = `
           <div class="role-header">
             <span class="drag-handle">⋮⋮</span>
@@ -542,6 +709,12 @@
               <span class="checked-count">${checkedIds.size}</span> of ${devices.length} selected
             </div>
           </div>
+          <div class="role-states">
+            <div class="role-states-title">Phase behavior</div>
+            <div class="phase-state-grid">
+              ${statesHtml}
+            </div>
+          </div>
         `;
         container.appendChild(card);
       });
@@ -554,27 +727,48 @@
         const name = card.querySelector('[data-field="name"]').value.trim();
         const id = card.querySelector('[data-field="id"]').value;
         const devices = [];
-        card.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
+        card.querySelectorAll('.role-body input[type="checkbox"]:checked').forEach((cb) => {
           devices.push(cb.dataset.deviceId);
         });
         roles.push({ id, name, devices });
       });
 
       const roleIds = roles.map((r) => r.id);
-      // Preserve existing phases and sensors if loaded, otherwise create defaults
+      // Preserve existing phase schedules if loaded, otherwise create defaults
       let phases = window.__existingPhases || buildDefaultPhases(roleIds);
-      // Ensure any new roles get default states in all phases
-      Object.keys(phases).forEach((phaseKey) => {
+      // Ensure schedule structure exists
+      const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+      phaseOrder.forEach((pk) => {
+        if (!phases[pk]) {
+          phases[pk] = { weekday: { conditions: [] }, weekend: { conditions: [] }, states: {} };
+        }
+      });
+
+      // Collect role states from UI
+      phaseOrder.forEach((pk) => {
+        phases[pk].states = {};
         roleIds.forEach((rid) => {
-          if (!phases[phaseKey].states[rid]) {
-            phases[phaseKey].states[rid] = { onoff: false };
+          const onoffEl = document.querySelector(`[data-role-state="onoff"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`);
+          const onoff = onoffEl ? onoffEl.checked : false;
+          const state = { onoff };
+
+          const dynamicEl = document.querySelector(`[data-role-state="dynamic"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`);
+          if (dynamicEl && dynamicEl.checked) {
+            const source = document.querySelector(`[data-role-state="source"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || 'indoor_downstairs';
+            const brightLux = parseFloat(document.querySelector(`[data-role-state="brightLux"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '100');
+            const darkLux = parseFloat(document.querySelector(`[data-role-state="darkLux"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '20');
+            const brightDim = parseFloat(document.querySelector(`[data-role-state="brightDim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '0');
+            const darkDim = parseFloat(document.querySelector(`[data-role-state="darkDim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '0.35');
+            state.dimming = { source, brightLux, darkLux, brightDim, darkDim };
+          } else {
+            const dimEl = document.querySelector(`[data-role-state="dim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`);
+            const dimVal = dimEl ? parseFloat(dimEl.value) : NaN;
+            if (!isNaN(dimVal) && dimEl.value !== '') {
+              state.dim = Math.min(Math.max(dimVal, 0), 1);
+            }
           }
-        });
-        // Remove states for deleted roles
-        Object.keys(phases[phaseKey].states).forEach((rid) => {
-          if (!roleIds.includes(rid)) {
-            delete phases[phaseKey].states[rid];
-          }
+
+          phases[pk].states[rid] = state;
         });
       });
 
@@ -736,7 +930,7 @@
           }
 
           const onoffDevices = allDevices.filter((d) => d.capabilities && d.capabilities.includes('onoff'));
-          renderRoles(roles, onoffDevices, rolesListEl);
+          renderRoles(roles, onoffDevices, phases, rolesListEl);
           renderSensors(allDevices, sensors);
           renderPhaseSchedule(phases);
 
@@ -755,11 +949,12 @@
       addRoleBtn.addEventListener('click', () => {
         const roles = window.__roles || [];
         const devices = window.__onoffDevices || [];
+        const phases = window.__existingPhases || null;
         const tempName = 'New Role';
         const tempId = toRoleSlug(tempName) + '-' + Date.now();
         roles.push({ id: tempId, name: tempName, devices: [] });
         window.__roles = roles;
-        renderRoles(roles, devices, rolesListEl);
+        renderRoles(roles, devices, phases, rolesListEl);
 
         // Focus the new role's name input
         const inputs = rolesListEl.querySelectorAll('[data-field="name"]');
@@ -776,9 +971,10 @@
         const idx = parseInt(card.dataset.idx, 10);
         const roles = window.__roles || [];
         const devices = window.__onoffDevices || [];
+        const phases = window.__existingPhases || null;
         roles.splice(idx, 1);
         window.__roles = roles;
-        renderRoles(roles, devices, rolesListEl);
+        renderRoles(roles, devices, phases, rolesListEl);
       });
 
       // Update role name and id.
@@ -806,11 +1002,20 @@
         }
       });
 
-      // Update checked count when checkboxes change.
+      // Update checked count when checkboxes change, and toggle dynamic dimming fields.
       rolesListEl.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') {
           const card = e.target.closest('.role-card');
-          updateCheckedCount(card);
+          if (e.target.dataset.roleState === 'dynamic') {
+            const phase = e.target.dataset.phase;
+            const roleId = e.target.dataset.roleId;
+            const dimRow = card.querySelector(`[data-role-state="dim"][data-role-id="${cssEscape(roleId)}"][data-phase="${phase}"]`)?.closest('.state-row');
+            const dimmingFields = card.querySelector(`[data-role-state="source"][data-role-id="${cssEscape(roleId)}"][data-phase="${phase}"]`)?.closest('.dimming-fields');
+            if (dimRow) dimRow.style.display = e.target.checked ? 'none' : '';
+            if (dimmingFields) dimmingFields.style.display = e.target.checked ? '' : 'none';
+          } else if (e.target.dataset.deviceId) {
+            updateCheckedCount(card);
+          }
         }
       });
 

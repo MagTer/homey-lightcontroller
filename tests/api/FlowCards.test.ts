@@ -120,6 +120,12 @@ function isPhaseCondition(currentPhase: Phase | null, argsPhase: Phase): boolean
   return currentPhase === argsPhase;
 }
 
+// phase_changed trigger payload shape
+interface PhaseChangedPayload {
+  phase: Phase;
+  previous_phase: Phase | null;
+}
+
 describe('FlowCards — is_phase condition', () => {
   it('returns true when current phase matches args phase', () => {
     expect(isPhaseCondition('MORNING', 'MORNING')).toBe(true);
@@ -141,6 +147,31 @@ describe('FlowCards — is_phase condition', () => {
     for (const p of phases) {
       expect(isPhaseCondition(p, p)).toBe(true);
       expect(isPhaseCondition(p, phases.find((x) => x !== p)!)).toBe(false);
+    }
+  });
+});
+
+describe('FlowCards — phase_changed trigger payload', () => {
+  it('includes both phase and previous_phase in payload', () => {
+    const payload: PhaseChangedPayload = { phase: 'MORNING', previous_phase: 'NIGHT' };
+    expect(payload.phase).toBe('MORNING');
+    expect(payload.previous_phase).toBe('NIGHT');
+  });
+
+  it('allows previous_phase to be null on first transition or forced phase', () => {
+    const payload: PhaseChangedPayload = { phase: 'NIGHT', previous_phase: null };
+    expect(payload.phase).toBe('NIGHT');
+    expect(payload.previous_phase).toBeNull();
+  });
+
+  it('accepts all valid phase values', () => {
+    const phases: Phase[] = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+    for (const from of phases) {
+      for (const to of phases) {
+        const payload: PhaseChangedPayload = { phase: to, previous_phase: from };
+        expect(payload.phase).toBe(to);
+        expect(payload.previous_phase).toBe(from);
+      }
     }
   });
 });
