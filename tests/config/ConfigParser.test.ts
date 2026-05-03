@@ -84,20 +84,19 @@ describe('ConfigParser', () => {
     expect(result.sensors).toEqual({ outdoor: 'only-outdoor' });
   });
 
-  it('accepts dimming config in role state', () => {
+  it('accepts dimming config in role', () => {
     const withDimming = clone(validConfig);
-    (withDimming as any).phases.MORNING.states.living = {
-      onoff: true,
-      dimming: {
-        source: 'indoor_downstairs',
-        brightLux: 100,
-        darkLux: 20,
-        brightDim: 0,
-        darkDim: 0.4,
-      }
+    (withDimming as any).roles[0].dimming = {
+      activeInPhases: ['MORNING', 'DAY', 'EVENING'],
+      source: 'indoor_downstairs',
+      brightLux: 100,
+      darkLux: 20,
+      brightDim: 0,
+      darkDim: 0.4,
     };
     const result = parseConfig(withDimming);
-    expect(result.phases.MORNING.states.living.dimming).toEqual({
+    expect(result.roles[0].dimming).toEqual({
+      activeInPhases: ['MORNING', 'DAY', 'EVENING'],
       source: 'indoor_downstairs',
       brightLux: 100,
       darkLux: 20,
@@ -108,15 +107,13 @@ describe('ConfigParser', () => {
 
   it('rejects invalid dimming source', () => {
     const bad = clone(validConfig);
-    (bad as any).phases.MORNING.states.living = {
-      onoff: true,
-      dimming: {
-        source: 'outdoor',
-        brightLux: 100,
-        darkLux: 20,
-        brightDim: 0,
-        darkDim: 0.4,
-      }
+    (bad as any).roles[0].dimming = {
+      activeInPhases: ['MORNING'],
+      source: 'outdoor',
+      brightLux: 100,
+      darkLux: 20,
+      brightDim: 0,
+      darkDim: 0.4,
     };
     expect(() => parseConfig(bad)).toThrow(ConfigValidationError);
   });

@@ -66,6 +66,42 @@
       margin-top: 4px;
     }
 
+    /* Status panel */
+    .status-panel {
+      margin: 0 16px 16px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .status-panel h3 {
+      margin: 0 0 10px;
+      font-size: 0.9375rem;
+      color: #222;
+    }
+    .status-row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      color: #555;
+    }
+    .status-item .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-item .value {
+      font-weight: 600;
+      color: #222;
+    }
+
     /* Phase pills */
     .phases-row {
       display: flex;
@@ -94,6 +130,42 @@
     .dot-morning { background: #f57c00; }
     .dot-day     { background: #fdd835; }
     .dot-evening { background: #7b1fa2; }
+
+    /* Quick setup */
+    .quick-setup { margin: 0 16px 16px; }
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    @media (min-width: 600px) {
+      .preset-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .preset-btn {
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+    .preset-btn:hover {
+      border-color: #00c853;
+      background: #f1f8e9;
+    }
+    .preset-btn strong {
+      display: block;
+      font-size: 0.9375rem;
+      margin-bottom: 2px;
+      color: #222;
+    }
+    .preset-btn span {
+      color: #666;
+      font-size: 0.8125rem;
+    }
 
     /* Roles list */
     .roles-list {
@@ -237,6 +309,11 @@
       font-size: 0.75rem;
       flex-shrink: 0;
     }
+    .device-zone {
+      font-size: 0.8125rem;
+      color: #888;
+      margin-left: auto;
+    }
     .device-hidden {
       display: none !important;
     }
@@ -361,34 +438,101 @@
       height: 16px;
       accent-color: #00c853;
     }
-    .dimming-fields {
+    .lux-pill {
+      display: inline-block;
+      background: #e3f2fd;
+      color: #1565c0;
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* Twilight section */
+    .twilight-section {
+      padding: 14px 16px;
+      border-top: 1px solid #f0f0f0;
+      background: #fff;
+    }
+    .twilight-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .twilight-toggle input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #00c853;
+    }
+    .twilight-toggle label {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #333;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+    .twilight-fields {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      margin-top: 6px;
-      padding-top: 6px;
-      border-top: 1px dashed #e0e0e0;
+      gap: 8px;
     }
-    .dimming-fields .dim-row {
+    .twilight-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .twilight-row label {
+      flex: 0 0 130px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #555;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 0;
+    }
+    .twilight-row input,
+    .twilight-row select {
+      flex: 1;
+      min-width: 0;
+      padding: 5px 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .twilight-row input[type="number"] {
+      min-width: 60px;
+    }
+    .phase-checkboxes {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .phase-checkboxes label {
       display: flex;
       align-items: center;
       gap: 4px;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 0;
+      cursor: pointer;
     }
-    .dimming-fields .dim-row label {
-      font-size: 0.6875rem;
-      color: #777;
-      flex: 0 0 60px;
+    .phase-checkboxes input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #00c853;
     }
-    .dimming-fields .dim-row input,
-    .dimming-fields .dim-row select {
-      flex: 1;
-      padding: 3px 5px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 0.75rem;
-    }
-    .dimming-fields .dim-row input[type="number"] {
-      min-width: 0;
+    .help-text {
+      font-size: 0.8125rem;
+      color: #666;
+      margin-top: 4px;
+      line-height: 1.4;
     }
 
     /* Sensor selects */
@@ -429,23 +573,86 @@
       align-items: center;
       gap: 8px;
     }
-    .schedule-row {
+    .schedule-block {
+      margin-bottom: 12px;
+    }
+    .schedule-block:last-child {
+      margin-bottom: 0;
+    }
+    .schedule-block strong {
+      font-size: 0.875rem;
+      color: #444;
+    }
+    .condition-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .condition-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 6px 0;
+      gap: 8px;
+      flex-wrap: wrap;
     }
-    .schedule-row label {
-      flex: 0 0 100px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #666;
+    .condition-row span {
+      font-size: 0.8125rem;
+      color: #555;
+      font-weight: 500;
+      min-width: 40px;
     }
-    .schedule-row input[type="time"] {
-      padding: 6px 8px;
+    .condition-row input[type="time"],
+    .condition-row select,
+    .condition-row input[type="number"] {
+      padding: 5px 8px;
       border: 1px solid #ddd;
       border-radius: 6px;
-      font-size: 0.9375rem;
+      font-size: 0.875rem;
+    }
+    .condition-row input[type="time"] {
+      width: 100px;
+    }
+    .condition-row select {
+      min-width: 130px;
+    }
+    .condition-row input[type="number"] {
+      width: 70px;
+    }
+    .condition-row .remove-cond {
+      padding: 4px 8px;
+      background: transparent;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .condition-row .remove-cond:hover {
+      background: #ffebee;
+    }
+    .lux-readonly {
+      font-size: 0.8125rem;
+      color: #666;
+      background: #f5f5f5;
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+    .add-cond-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .add-cond-btn {
+      padding: 5px 10px;
+      background: #fff;
+      color: #00c853;
+      border: 1px dashed #c8e6c9;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8125rem;
+    }
+    .add-cond-btn:hover {
+      background: #f1f8e9;
     }
     .schedule-hint {
       font-size: 0.8125rem;
@@ -494,6 +701,28 @@
   <div id="status"></div>
 
   <div id="app">
+    <!-- Status panel -->
+    <div id="status-panel" class="status-panel" style="display:none;">
+      <div class="status-row">
+        <div class="status-item">
+          <span class="dot dot-day" id="status-phase-dot"></span>
+          <span id="status-phase">Loading…</span>
+        </div>
+        <div class="status-item">
+          Outdoor: <span class="value" id="status-lux-outdoor">—</span>
+        </div>
+        <div class="status-item">
+          Downstairs: <span class="value" id="status-lux-down">—</span>
+        </div>
+        <div class="status-item">
+          Upstairs: <span class="value" id="status-lux-up">—</span>
+        </div>
+        <div class="status-item">
+          Last change: <span class="value" id="status-last-transition">—</span>
+        </div>
+      </div>
+    </div>
+
     <!-- What is a role? -->
     <details open>
       <summary>What is a role?</summary>
@@ -520,6 +749,43 @@
       </div>
     </details>
 
+    <!-- Quick Setup -->
+    <div id="quick-setup" class="quick-setup" style="display:none;">
+      <div class="info-box">
+        <h3>Quick Setup</h3>
+        <p>Choose a preset to get started quickly. You can always customize afterwards.</p>
+        <div class="preset-grid">
+          <button type="button" class="preset-btn" data-preset="window-downstairs">
+            <strong>Window lights — downstairs</strong>
+            <span>On in Morning &amp; Evening, off at Night &amp; Day</span>
+          </button>
+          <button type="button" class="preset-btn" data-preset="window-upstairs">
+            <strong>Window lights — upstairs</strong>
+            <span>On in Evening only</span>
+          </button>
+          <button type="button" class="preset-btn" data-preset="twilight-downstairs">
+            <strong>Ambient/twilight — downstairs</strong>
+            <span>Lux-controlled in Morning, Day &amp; Evening</span>
+          </button>
+          <button type="button" class="preset-btn" data-preset="twilight-upstairs">
+            <strong>Ambient/twilight — upstairs</strong>
+            <span>Lux-controlled in Morning, Day &amp; Evening</span>
+          </button>
+          <button type="button" class="preset-btn" data-preset="outdoor">
+            <strong>Outdoor lights</strong>
+            <span>On in Evening, off otherwise</span>
+          </button>
+          <button type="button" class="preset-btn" data-preset="kitchen-morning">
+            <strong>Kitchen / morning extras</strong>
+            <span>On in Morning &amp; Evening</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="preset-toggle" style="display:none; margin: 0 16px 12px;">
+      <button type="button" class="add-role-btn" id="show-presets-btn" style="width:auto; padding:8px 14px; font-size:0.875rem;">+ Add from preset…</button>
+    </div>
+
     <!-- Lux Sensors section -->
     <fieldset class="homey-form-fieldset">
       <legend class="homey-form-legend">Lux Sensors</legend>
@@ -544,7 +810,7 @@
     <fieldset class="homey-form-fieldset">
       <legend class="homey-form-legend">Phase Schedules</legend>
       <div class="info-box" style="margin: 0 0 12px;">
-        <p>Adjust when each phase starts. Time conditions are shown below; solar and lux conditions can be edited in the advanced config.</p>
+        <p>Adjust when each phase starts. Time and solar conditions are editable below; lux conditions are read-only.</p>
         <p class="example">💡 Tip: Add a lux condition to MORNING to skip wake-up lights when it's already bright.</p>
       </div>
       <div id="phases-schedule"></div>
@@ -552,7 +818,7 @@
 
     <!-- Roles section -->
     <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend">Roles & Devices</legend>
+      <legend class="homey-form-legend">Roles &amp; Devices</legend>
       <div id="roles-list" class="roles-list"></div>
       <button type="button" class="add-role-btn" id="add-role-btn">+ Add Role</button>
     </fieldset>
@@ -596,8 +862,124 @@
     }
 
     function cssEscape(str) {
-      // Minimal CSS escape for IDs that may contain special chars
-      return String(str).replace(/([!"#$%&'()*+,.\/;<=>?@[\\\]^`{|}~])/g, '\\$1');
+      return String(str).replace(/([!"#$%&'()*+,./;<=>?@[\\\]^`{|}~])/g, '\\$1');
+    }
+
+    // Status panel helpers
+    const STATUS_PHASE_LABELS = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
+
+    function renderStatusPanel(status) {
+      const panel = document.getElementById('status-panel');
+      if (!status || !status.currentPhase) {
+        panel.style.display = 'none';
+        return;
+      }
+      panel.style.display = '';
+      const phase = status.currentPhase;
+      const labelEl = document.getElementById('status-phase');
+      const dotEl = document.getElementById('status-phase-dot');
+      if (labelEl) labelEl.textContent = STATUS_PHASE_LABELS[phase] || phase;
+      if (dotEl) {
+        dotEl.className = 'dot dot-' + phase.toLowerCase();
+      }
+
+      const lux = status.lux || {};
+      const luxOut = document.getElementById('status-lux-outdoor');
+      const luxDown = document.getElementById('status-lux-down');
+      const luxUp = document.getElementById('status-lux-up');
+      if (luxOut) luxOut.textContent = lux.outdoor != null ? Math.round(lux.outdoor) + ' lux' : 'No sensor';
+      if (luxDown) luxDown.textContent = lux.indoor_downstairs != null ? Math.round(lux.indoor_downstairs) + ' lux' : 'No sensor';
+      if (luxUp) luxUp.textContent = lux.indoor_upstairs != null ? Math.round(lux.indoor_upstairs) + ' lux' : 'No sensor';
+
+      const lastTrans = document.getElementById('status-last-transition');
+      if (lastTrans) {
+        if (status.lastTransition && status.lastTransition.at) {
+          const d = new Date(status.lastTransition.at);
+          lastTrans.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else {
+          lastTrans.textContent = '—';
+        }
+      }
+    }
+
+    // Presets
+    function ensureRoleInPhases(roleId, phases, stateMaker) {
+      const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+      phaseOrder.forEach((pk) => {
+        if (!phases[pk]) {
+          phases[pk] = { weekday: { conditions: [{ type: 'time', at: '00:00' }] }, weekend: { conditions: [{ type: 'time', at: '00:00' }] }, states: {} };
+        }
+        if (!phases[pk].states) phases[pk].states = {};
+        phases[pk].states[roleId] = stateMaker(pk);
+      });
+    }
+
+    function applyPreset(presetKey) {
+      const roles = window.__roles || [];
+      const phases = JSON.parse(JSON.stringify(window.__existingPhases || buildDefaultPhases(roles.map((r) => r.id))));
+      const devices = window.__onoffDevices || [];
+      const rolesListEl = document.getElementById('roles-list');
+
+      const idBase = presetKey;
+      let id = idBase;
+      let counter = 1;
+      while (roles.some((r) => r.id === id)) {
+        id = idBase + '-' + counter;
+        counter++;
+      }
+
+      if (presetKey === 'window-downstairs') {
+        roles.push({ id, name: 'Window lights — downstairs', devices: [], dimming: null });
+        ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'MORNING' || pk === 'EVENING' }));
+      } else if (presetKey === 'window-upstairs') {
+        roles.push({ id, name: 'Window lights — upstairs', devices: [], dimming: null });
+        ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'EVENING' }));
+      } else if (presetKey === 'twilight-downstairs') {
+        roles.push({
+          id, name: 'Ambient/twilight — downstairs', devices: [],
+          dimming: {
+            activeInPhases: ['MORNING', 'DAY', 'EVENING'],
+            source: 'indoor_downstairs',
+            brightLux: 100, darkLux: 20, brightDim: 0, darkDim: 0.35
+          }
+        });
+        ensureRoleInPhases(id, phases, (pk) => ({ onoff: false }));
+      } else if (presetKey === 'twilight-upstairs') {
+        roles.push({
+          id, name: 'Ambient/twilight — upstairs', devices: [],
+          dimming: {
+            activeInPhases: ['MORNING', 'DAY', 'EVENING'],
+            source: 'indoor_upstairs',
+            brightLux: 28, darkLux: 10, brightDim: 0, darkDim: 0.35
+          }
+        });
+        ensureRoleInPhases(id, phases, (pk) => ({ onoff: false }));
+      } else if (presetKey === 'outdoor') {
+        roles.push({ id, name: 'Outdoor lights', devices: [], dimming: null });
+        ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'EVENING' }));
+      } else if (presetKey === 'kitchen-morning') {
+        roles.push({ id, name: 'Kitchen / morning extras', devices: [], dimming: null });
+        ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'MORNING' || pk === 'EVENING' }));
+      }
+
+      window.__roles = roles;
+      window.__existingPhases = phases;
+      renderRoles(roles, devices, phases, rolesListEl);
+      renderPhaseSchedule(phases);
+      updateQuickSetupVisibility();
+    }
+
+    function updateQuickSetupVisibility() {
+      const roles = window.__roles || [];
+      const quick = document.getElementById('quick-setup');
+      const toggle = document.getElementById('preset-toggle');
+      if (roles.length === 0) {
+        quick.style.display = '';
+        toggle.style.display = 'none';
+      } else {
+        quick.style.display = 'none';
+        toggle.style.display = '';
+      }
     }
 
     function renderRoleStates(role, phases) {
@@ -607,52 +989,31 @@
 
       return phaseOrder.map((phase) => {
         const state = (phases && phases[phase] && phases[phase].states && phases[phase].states[role.id]) || { onoff: false };
-        const hasDimming = !!state.dimming;
-        const dimValue = hasDimming ? '' : (state.dim !== undefined ? state.dim : '');
-        const dimDisplay = hasDimming ? 'none' : '';
-        const dimmingDisplay = hasDimming ? '' : 'none';
+        const isLuxControlled = role.dimming && role.dimming.activeInPhases.includes(phase);
 
-        const d = state.dimming || {};
+        if (isLuxControlled) {
+          return `
+            <div class="phase-state-cell">
+              <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${phaseLabels[phase]}</div>
+              <div class="lux-pill">Lux-controlled</div>
+              <div class="state-row" style="margin-top:6px;opacity:0.7;">
+                <input type="checkbox" id="st-${escHtml(role.id)}-${phase}-onoff" data-role-state="onoff" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${state.onoff ? 'checked' : ''}>
+                <label for="st-${escHtml(role.id)}-${phase}-onoff">Fallback on</label>
+              </div>
+            </div>
+          `;
+        }
 
         return `
           <div class="phase-state-cell">
             <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${phaseLabels[phase]}</div>
             <div class="state-row">
-              <input type="checkbox" id="st-${role.id}-${phase}-onoff" data-role-state="onoff" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${state.onoff ? 'checked' : ''}>
-              <label for="st-${role.id}-${phase}-onoff">On</label>
-            </div>
-            <div class="state-row" style="display:${dimDisplay}">
-              <label>Dim</label>
-              <input type="number" min="0" max="1" step="0.01" value="${dimValue}" data-role-state="dim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
+              <input type="checkbox" id="st-${escHtml(role.id)}-${phase}-onoff" data-role-state="onoff" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${state.onoff ? 'checked' : ''}>
+              <label for="st-${escHtml(role.id)}-${phase}-onoff">On</label>
             </div>
             <div class="state-row">
-              <input type="checkbox" id="st-${role.id}-${phase}-dyn" data-role-state="dynamic" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${hasDimming ? 'checked' : ''}>
-              <label for="st-${role.id}-${phase}-dyn">Auto-dim</label>
-            </div>
-            <div class="dimming-fields" style="display:${dimmingDisplay}">
-              <div class="dim-row">
-                <label>Source</label>
-                <select data-role-state="source" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
-                  <option value="indoor_downstairs" ${d.source === 'indoor_downstairs' ? 'selected' : ''}>Downstairs</option>
-                  <option value="indoor_upstairs" ${d.source === 'indoor_upstairs' ? 'selected' : ''}>Upstairs</option>
-                </select>
-              </div>
-              <div class="dim-row">
-                <label>Bright lux</label>
-                <input type="number" min="0" step="1" value="${d.brightLux !== undefined ? d.brightLux : '100'}" data-role-state="brightLux" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
-              </div>
-              <div class="dim-row">
-                <label>Dark lux</label>
-                <input type="number" min="0" step="1" value="${d.darkLux !== undefined ? d.darkLux : '20'}" data-role-state="darkLux" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
-              </div>
-              <div class="dim-row">
-                <label>Bright dim</label>
-                <input type="number" min="0" max="1" step="0.01" value="${d.brightDim !== undefined ? d.brightDim : '0'}" data-role-state="brightDim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
-              </div>
-              <div class="dim-row">
-                <label>Dark dim</label>
-                <input type="number" min="0" max="1" step="0.01" value="${d.darkDim !== undefined ? d.darkDim : '0.35'}" data-role-state="darkDim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
-              </div>
+              <label>Dim</label>
+              <input type="number" min="0" max="1" step="0.01" value="${state.dim !== undefined ? state.dim : ''}" data-role-state="dim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
             </div>
           </div>
         `;
@@ -686,11 +1047,16 @@
             <label for="dev-${idx}-${escHtml(d.id)}">
               <span class="device-icon">💡</span>
               ${escHtml(d.name)}
+              <span class="device-zone">${escHtml(d.zoneName || '')}</span>
             </label>
           </div>
         `).join('');
 
         const statesHtml = renderRoleStates(role, phases);
+
+        const dimming = role.dimming || null;
+        const dimmingFieldsDisplay = dimming ? '' : 'none';
+        const activePhases = dimming ? dimming.activeInPhases : [];
 
         card.innerHTML = `
           <div class="role-header">
@@ -707,6 +1073,49 @@
             </div>
             <div class="device-count">
               <span class="checked-count">${checkedIds.size}</span> of ${devices.length} selected
+            </div>
+          </div>
+          <div class="twilight-section">
+            <div class="twilight-toggle">
+              <input type="checkbox" id="dim-enable-${idx}" data-field="dimming-enabled" ${dimming ? 'checked' : ''}>
+              <label for="dim-enable-${idx}">Enable lux-based dimming</label>
+            </div>
+            <div class="twilight-fields" style="display:${dimmingFieldsDisplay}">
+              <div class="twilight-row">
+                <label>Active in phases</label>
+                <div class="phase-checkboxes">
+                  <label><input type="checkbox" data-field="dimming-phase" value="NIGHT" ${activePhases.includes('NIGHT') ? 'checked' : ''}> Night</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="MORNING" ${activePhases.includes('MORNING') ? 'checked' : ''}> Morning</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="DAY" ${activePhases.includes('DAY') ? 'checked' : ''}> Day</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="EVENING" ${activePhases.includes('EVENING') ? 'checked' : ''}> Evening</label>
+                </div>
+              </div>
+              <div class="twilight-row">
+                <label>Lux sensor</label>
+                <select data-field="dimming-source">
+                  <option value="indoor_downstairs" ${dimming && dimming.source === 'indoor_downstairs' ? 'selected' : ''}>Indoor — downstairs</option>
+                  <option value="indoor_upstairs" ${dimming && dimming.source === 'indoor_upstairs' ? 'selected' : ''}>Indoor — upstairs</option>
+                </select>
+              </div>
+              <div class="twilight-row">
+                <label>Bright lux (off)</label>
+                <input type="number" min="0" step="1" value="${dimming ? dimming.brightLux : '100'}" data-field="dimming-brightLux">
+              </div>
+              <div class="twilight-row">
+                <label>Dark lux (full)</label>
+                <input type="number" min="0" step="1" value="${dimming ? dimming.darkLux : '20'}" data-field="dimming-darkLux">
+              </div>
+              <div class="twilight-row">
+                <label>Bright dim</label>
+                <input type="number" min="0" max="1" step="0.01" value="${dimming ? dimming.brightDim : '0'}" data-field="dimming-brightDim">
+              </div>
+              <div class="twilight-row">
+                <label>Dark dim</label>
+                <input type="number" min="0" max="1" step="0.01" value="${dimming ? dimming.darkDim : '0.35'}" data-field="dimming-darkDim">
+              </div>
+              <div class="help-text">
+                When enabled, indoor lux controls this role's brightness during the selected phases. Outside those phases, the on/off settings above apply. Tip: leave Night unchecked to ensure lights stay off at night.
+              </div>
             </div>
           </div>
           <div class="role-states">
@@ -730,7 +1139,23 @@
         card.querySelectorAll('.role-body input[type="checkbox"]:checked').forEach((cb) => {
           devices.push(cb.dataset.deviceId);
         });
-        roles.push({ id, name, devices });
+        const role = { id, name, devices };
+
+        const dimmingEnabled = card.querySelector('[data-field="dimming-enabled"]')?.checked;
+        if (dimmingEnabled) {
+          const activeInPhases = [];
+          card.querySelectorAll('[data-field="dimming-phase"]:checked').forEach((cb) => {
+            activeInPhases.push(cb.value);
+          });
+          const source = card.querySelector('[data-field="dimming-source"]')?.value || 'indoor_downstairs';
+          const brightLux = parseFloat(card.querySelector('[data-field="dimming-brightLux"]')?.value || '100');
+          const darkLux = parseFloat(card.querySelector('[data-field="dimming-darkLux"]')?.value || '20');
+          const brightDim = parseFloat(card.querySelector('[data-field="dimming-brightDim"]')?.value || '0');
+          const darkDim = parseFloat(card.querySelector('[data-field="dimming-darkDim"]')?.value || '0.35');
+          role.dimming = { activeInPhases, source, brightLux, darkLux, brightDim, darkDim };
+        }
+
+        roles.push(role);
       });
 
       const roleIds = roles.map((r) => r.id);
@@ -752,17 +1177,9 @@
           const onoff = onoffEl ? onoffEl.checked : false;
           const state = { onoff };
 
-          const dynamicEl = document.querySelector(`[data-role-state="dynamic"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`);
-          if (dynamicEl && dynamicEl.checked) {
-            const source = document.querySelector(`[data-role-state="source"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || 'indoor_downstairs';
-            const brightLux = parseFloat(document.querySelector(`[data-role-state="brightLux"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '100');
-            const darkLux = parseFloat(document.querySelector(`[data-role-state="darkLux"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '20');
-            const brightDim = parseFloat(document.querySelector(`[data-role-state="brightDim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '0');
-            const darkDim = parseFloat(document.querySelector(`[data-role-state="darkDim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`)?.value || '0.35');
-            state.dimming = { source, brightLux, darkLux, brightDim, darkDim };
-          } else {
-            const dimEl = document.querySelector(`[data-role-state="dim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`);
-            const dimVal = dimEl ? parseFloat(dimEl.value) : NaN;
+          const dimEl = document.querySelector(`[data-role-state="dim"][data-role-id="${cssEscape(rid)}"][data-phase="${pk}"]`);
+          if (dimEl) {
+            const dimVal = parseFloat(dimEl.value);
             if (!isNaN(dimVal) && dimEl.value !== '') {
               state.dim = Math.min(Math.max(dimVal, 0), 1);
             }
@@ -787,7 +1204,7 @@
     }
 
     function updateCheckedCount(card) {
-      const checked = card.querySelectorAll('input[type="checkbox"]:checked').length;
+      const checked = card.querySelectorAll('.device-item input[type="checkbox"]:checked').length;
       const total = card.querySelectorAll('.device-item').length;
       const countEl = card.querySelector('.checked-count');
       if (countEl) countEl.textContent = checked;
@@ -807,9 +1224,40 @@
       });
     }
 
-    function getTimeCondition(conditions) {
-      if (!Array.isArray(conditions)) return null;
-      return conditions.find((c) => c.type === 'time') || null;
+    function renderConditionRow(condition, index) {
+      if (condition.type === 'time') {
+        return `
+          <div class="condition-row" data-cond-idx="${index}">
+            <span>Time</span>
+            <input type="time" value="${escHtml(condition.at || '')}" data-cond-type="time">
+            <button type="button" class="remove-cond" data-remove-cond>×</button>
+          </div>
+        `;
+      }
+      if (condition.type === 'solar') {
+        return `
+          <div class="condition-row" data-cond-idx="${index}">
+            <span>Solar</span>
+            <select data-cond-type="solar-event">
+              <option value="sunrise" ${condition.event === 'sunrise' ? 'selected' : ''}>Sunrise</option>
+              <option value="sunset" ${condition.event === 'sunset' ? 'selected' : ''}>Sunset</option>
+              <option value="goldenHour" ${condition.event === 'goldenHour' ? 'selected' : ''}>Golden hour</option>
+              <option value="goldenHourEnd" ${condition.event === 'goldenHourEnd' ? 'selected' : ''}>Golden hour end</option>
+            </select>
+            <input type="number" value="${condition.offsetMinutes}" data-cond-type="solar-offset" placeholder="min">
+            <button type="button" class="remove-cond" data-remove-cond>×</button>
+          </div>
+        `;
+      }
+      if (condition.type === 'lux') {
+        return `
+          <div class="condition-row" data-cond-idx="${index}" data-cond-json="${escHtml(JSON.stringify(condition))}">
+            <span class="lux-readonly">Lux ${condition.operator === 'lt' ? '&lt;' : '&gt;'} ${condition.value}</span>
+            <button type="button" class="remove-cond" data-remove-cond>×</button>
+          </div>
+        `;
+      }
+      return '';
     }
 
     function renderPhaseSchedule(phases) {
@@ -823,22 +1271,32 @@
 
       phaseOrder.forEach((phase) => {
         const cfg = phases && phases[phase] ? phases[phase] : { weekday: { conditions: [] }, weekend: { conditions: [] } };
-        const wdTime = getTimeCondition(cfg.weekday && cfg.weekday.conditions);
-        const weTime = getTimeCondition(cfg.weekend && cfg.weekend.conditions);
+        const wdConditions = cfg.weekday && cfg.weekday.conditions ? cfg.weekday.conditions : [];
+        const weConditions = cfg.weekend && cfg.weekend.conditions ? cfg.weekend.conditions : [];
 
         const card = document.createElement('div');
         card.className = 'phase-schedule-card';
         card.innerHTML = `
           <h4><span class="dot" style="background:${phaseColors[phase]};width:10px;height:10px;display:inline-block;border-radius:50%;"></span> ${escHtml(phaseLabels[phase])}</h4>
-          <div class="schedule-row">
-            <label>Weekday</label>
-            <input type="time" data-phase="${phase}" data-schedule="weekday" value="${escHtml(wdTime ? wdTime.at : '')}">
-            <span class="schedule-hint">Earliest condition triggers the phase</span>
+          <div class="schedule-block">
+            <strong>Weekday</strong>
+            <div class="condition-list" data-schedule-phase="${phase}" data-schedule-type="weekday">
+              ${wdConditions.map((c, i) => renderConditionRow(c, i)).join('')}
+            </div>
+            <div class="add-cond-row">
+              <button type="button" class="add-cond-btn" data-add-cond="time" data-phase="${phase}" data-schedule="weekday">+ Time</button>
+              <button type="button" class="add-cond-btn" data-add-cond="solar" data-phase="${phase}" data-schedule="weekday">+ Solar</button>
+            </div>
           </div>
-          <div class="schedule-row">
-            <label>Weekend</label>
-            <input type="time" data-phase="${phase}" data-schedule="weekend" value="${escHtml(weTime ? weTime.at : '')}">
-            <span class="schedule-hint">Earliest condition triggers the phase</span>
+          <div class="schedule-block">
+            <strong>Weekend</strong>
+            <div class="condition-list" data-schedule-phase="${phase}" data-schedule-type="weekend">
+              ${weConditions.map((c, i) => renderConditionRow(c, i)).join('')}
+            </div>
+            <div class="add-cond-row">
+              <button type="button" class="add-cond-btn" data-add-cond="time" data-phase="${phase}" data-schedule="weekend">+ Time</button>
+              <button type="button" class="add-cond-btn" data-add-cond="solar" data-phase="${phase}" data-schedule="weekend">+ Solar</button>
+            </div>
           </div>
         `;
         container.appendChild(card);
@@ -853,20 +1311,32 @@
           phases[phase] = { weekday: { conditions: [] }, weekend: { conditions: [] }, states: {} };
         }
         ['weekday', 'weekend'].forEach((scheduleType) => {
-          const input = document.querySelector(`input[type="time"][data-phase="${phase}"][data-schedule="${scheduleType}"]`);
-          const timeValue = input ? input.value : '';
-          const existing = phases[phase][scheduleType] || { conditions: [] };
-          const conditions = existing.conditions ? [...existing.conditions] : [];
-          const timeIdx = conditions.findIndex((c) => c.type === 'time');
-          if (timeValue) {
-            const timeCond = { type: 'time', at: timeValue };
-            if (timeIdx >= 0) {
-              conditions[timeIdx] = timeCond;
-            } else {
-              conditions.unshift(timeCond);
-            }
-          } else if (timeIdx >= 0) {
-            conditions.splice(timeIdx, 1);
+          const list = document.querySelector(`.condition-list[data-schedule-phase="${phase}"][data-schedule-type="${scheduleType}"]`);
+          const conditions = [];
+          if (list) {
+            list.querySelectorAll('.condition-row').forEach((row) => {
+              const timeInput = row.querySelector('[data-cond-type="time"]');
+              if (timeInput) {
+                if (timeInput.value) {
+                  conditions.push({ type: 'time', at: timeInput.value });
+                }
+                return;
+              }
+              const solarEvent = row.querySelector('[data-cond-type="solar-event"]');
+              const solarOffset = row.querySelector('[data-cond-type="solar-offset"]');
+              if (solarEvent) {
+                conditions.push({
+                  type: 'solar',
+                  event: solarEvent.value,
+                  offsetMinutes: parseInt(solarOffset?.value || '0', 10) || 0,
+                });
+                return;
+              }
+              const luxJson = row.dataset.condJson;
+              if (luxJson) {
+                conditions.push(JSON.parse(luxJson));
+              }
+            });
           }
           phases[phase][scheduleType] = { conditions };
         });
@@ -882,6 +1352,7 @@
       const addRoleBtn = document.getElementById('add-role-btn');
       const saveBtn = document.getElementById('save-btn');
       const appEl = document.getElementById('app');
+      const showPresetsBtn = document.getElementById('show-presets-btn');
 
       let saving = false;
 
@@ -901,6 +1372,15 @@
         appEl.style.pointerEvents = '';
       }
 
+      // Poll status every 30s
+      function pollStatus() {
+        Homey.api('GET', '/status')
+          .then((status) => renderStatusPanel(status))
+          .catch(() => {});
+      }
+      pollStatus();
+      setInterval(pollStatus, 30000);
+
       // Load config and devices in parallel.
       showLoading();
       Promise.all([
@@ -916,23 +1396,37 @@
           let roles = [];
           let sensors = {};
           let phases = null;
-          if (config && config.phases && config.phases.NIGHT && config.phases.NIGHT.states) {
-            phases = config.phases;
-            roles = Object.keys(config.phases.NIGHT.states).map((id) => {
-              const existingRole = (config.roles || []).find((r) => r.id === id);
-              return {
-                id,
-                name: existingRole ? existingRole.name : id,
-                devices: existingRole && existingRole.devices ? existingRole.devices : []
-              };
-            });
+
+          if (config) {
+            if (config.phases) phases = config.phases;
             if (config.sensors) sensors = config.sensors;
+
+            if (config.roles && config.roles.length > 0) {
+              roles = config.roles.map((r) => ({
+                id: r.id,
+                name: r.name,
+                devices: r.devices || [],
+                dimming: r.dimming || null,
+              }));
+            } else if (phases && phases.NIGHT && phases.NIGHT.states) {
+              // Backward compatibility: derive roles from phase states
+              roles = Object.keys(phases.NIGHT.states).map((id) => {
+                const existingRole = (config.roles || []).find((r) => r.id === id);
+                return {
+                  id,
+                  name: existingRole ? existingRole.name : id,
+                  devices: existingRole && existingRole.devices ? existingRole.devices : [],
+                  dimming: null,
+                };
+              });
+            }
           }
 
           const onoffDevices = allDevices.filter((d) => d.capabilities && d.capabilities.includes('onoff'));
           renderRoles(roles, onoffDevices, phases, rolesListEl);
           renderSensors(allDevices, sensors);
           renderPhaseSchedule(phases);
+          updateQuickSetupVisibility();
 
           window.__roles = roles;
           window.__onoffDevices = onoffDevices;
@@ -952,9 +1446,10 @@
         const phases = window.__existingPhases || null;
         const tempName = 'New Role';
         const tempId = toRoleSlug(tempName) + '-' + Date.now();
-        roles.push({ id: tempId, name: tempName, devices: [] });
+        roles.push({ id: tempId, name: tempName, devices: [], dimming: null });
         window.__roles = roles;
         renderRoles(roles, devices, phases, rolesListEl);
+        updateQuickSetupVisibility();
 
         // Focus the new role's name input
         const inputs = rolesListEl.querySelectorAll('[data-field="name"]');
@@ -962,6 +1457,21 @@
           inputs[inputs.length - 1].focus();
           inputs[inputs.length - 1].select();
         }
+      });
+
+      // Show presets
+      if (showPresetsBtn) {
+        showPresetsBtn.addEventListener('click', () => {
+          document.getElementById('quick-setup').style.display = '';
+          showPresetsBtn.style.display = 'none';
+        });
+      }
+
+      // Preset buttons
+      document.getElementById('quick-setup').addEventListener('click', (e) => {
+        const preset = e.target.closest('[data-preset]');
+        if (!preset) return;
+        applyPreset(preset.dataset.preset);
       });
 
       // Remove a role.
@@ -975,9 +1485,10 @@
         roles.splice(idx, 1);
         window.__roles = roles;
         renderRoles(roles, devices, phases, rolesListEl);
+        updateQuickSetupVisibility();
       });
 
-      // Update role name and id.
+      // Update role name and id, device search, toggle twilight fields.
       rolesListEl.addEventListener('input', (e) => {
         if (e.target.dataset.field === 'name') {
           const card = e.target.closest('.role-card');
@@ -1006,15 +1517,39 @@
       rolesListEl.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') {
           const card = e.target.closest('.role-card');
-          if (e.target.dataset.roleState === 'dynamic') {
-            const phase = e.target.dataset.phase;
-            const roleId = e.target.dataset.roleId;
-            const dimRow = card.querySelector(`[data-role-state="dim"][data-role-id="${cssEscape(roleId)}"][data-phase="${phase}"]`)?.closest('.state-row');
-            const dimmingFields = card.querySelector(`[data-role-state="source"][data-role-id="${cssEscape(roleId)}"][data-phase="${phase}"]`)?.closest('.dimming-fields');
-            if (dimRow) dimRow.style.display = e.target.checked ? 'none' : '';
-            if (dimmingFields) dimmingFields.style.display = e.target.checked ? '' : 'none';
+          if (e.target.dataset.field === 'dimming-enabled') {
+            const fields = card.querySelector('.twilight-fields');
+            if (fields) fields.style.display = e.target.checked ? '' : 'none';
           } else if (e.target.dataset.deviceId) {
             updateCheckedCount(card);
+          }
+        }
+      });
+
+      // Phase schedule add/remove conditions (delegated)
+      document.getElementById('phases-schedule').addEventListener('click', (e) => {
+        const removeBtn = e.target.closest('[data-remove-cond]');
+        if (removeBtn) {
+          const row = removeBtn.closest('.condition-row');
+          if (row) row.remove();
+          return;
+        }
+
+        const addBtn = e.target.closest('[data-add-cond]');
+        if (addBtn) {
+          const type = addBtn.dataset.addCond;
+          const list = addBtn.closest('.schedule-block').querySelector('.condition-list');
+          const idx = list.querySelectorAll('.condition-row').length;
+          let condition;
+          if (type === 'time') {
+            condition = { type: 'time', at: '08:00' };
+          } else if (type === 'solar') {
+            condition = { type: 'solar', event: 'sunrise', offsetMinutes: 0 };
+          }
+          if (condition) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = renderConditionRow(condition, idx);
+            list.appendChild(wrapper.firstElementChild);
           }
         }
       });

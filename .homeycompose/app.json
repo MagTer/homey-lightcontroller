@@ -1,0 +1,35 @@
+{
+  "id": "com.magter.light-controller",
+  "version": "1.0.0",
+  "compatibility": ">=12.0.1",
+  "sdk": 3,
+  "platforms": ["local"],
+  "name": {
+    "en": "Lighting Scheduler",
+    "sv": "Belysningsschema"
+  },
+  "description": {
+    "en": "State-machine lighting automation with four phases: Night, Morning, Day, Evening. Assign devices to roles, configure lux-based twilight dimming, and let the app handle the rest.",
+    "sv": "Tillståndsbaserad belysningsautomation med fyra faser: Natt, Morgon, Dag, Kväll. Tilldela enheter till roller, konfigurera lux-baserad skymningsdimning och låt appen sköta resten."
+  },
+  "brandColor": "#F5A623",
+  "category": ["lights"],
+  "permissions": ["homey:manager:api"],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Magnus"
+  },
+  "tags": {
+    "en": ["lights", "schedule", "automation", "state machine", "twilight", "lux", "dimming"],
+    "sv": ["lampor", "schema", "automation", "tillstånd", "skymning", "lux", "dimning"]
+  },
+  "source": "https://github.com/MagTer/homey-lightcontroller",
+  "homepage": "https://github.com/MagTer/homey-lightcontroller",
+  "bugs": {
+    "url": "https://github.com/MagTer/homey-lightcontroller/issues"
+  }
+}

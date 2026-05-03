@@ -26,6 +26,17 @@ export default {
     return { ok: true, phase };
   },
 
+  async getStatus({ homey }: { homey: any }) {
+    homey.app.log('api:getStatus called');
+    try {
+      const status = homey.app.getStatus();
+      return status;
+    } catch (err: any) {
+      homey.app.error('api:getStatus error', { message: err?.message });
+      throw err;
+    }
+  },
+
   async getDevices({ homey }: { homey: any }) {
     homey.app.log('api:getDevices called');
     try {
@@ -47,7 +58,12 @@ export default {
           Array.isArray(d.capabilities) &&
           (d.capabilities.includes('onoff') || d.capabilities.includes('measure_luminance'))
         )
-        .map((d: any) => ({ id: d.id, name: d.name, capabilities: d.capabilities }));
+        .map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          capabilities: d.capabilities,
+          zoneName: d.zoneName || '',
+        }));
 
       homey.app.log('api:getDevices ok', { count: devices.length });
       return devices;

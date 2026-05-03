@@ -22,6 +22,7 @@ export default class MyApp extends Homey.App {
   private _reconciler!: Reconciler;
   private _tickInterval: ReturnType<typeof setInterval> | null = null;
   private _luxAggregator = new LuxAggregator();
+  private _lastTransition: { from: Phase | null; to: Phase; at: string } | null = null;
 
   /**
    * Force the active phase to a specific value, bypassing automatic evaluation.
@@ -54,6 +55,36 @@ export default class MyApp extends Homey.App {
    */
   getForcedPhase(): Phase | null {
     return this._forcedPhase;
+  }
+
+  /**
+   * Get current runtime status for the settings page status panel.
+   */
+  getStatus(): {
+    currentPhase: Phase | null;
+    lux: Record<string, number | null>;
+    lastTransition: { from: Phase | null; to: Phase; at: string } | null;
+  } {
+    const store = this.homey.settings as unknown as SettingsStore;
+    const currentPhase = store.get('currentPhase') as Phase | null;
+    const config = this.getConfig();
+    const sensors = config?.sensors;
+    const lux: Record<string, number | null> = {};
+
+    if (sensors) {
+      const now = new Date();
+      const diagnostics = this._luxAggregator.getDiagnostics(now);
+      for (const key of Object.keys(sensors)) {
+        const sensor = diagnostics.sensors.find((s) => s.id === sensors[key as keyof typeof sensors]);
+        lux[key] = sensor && !sensor.isStale ? sensor.lastValue : null;
+      }
+    }
+
+    return {
+      currentPhase,
+      lux,
+      lastTransition: this._lastTransition,
+    };
   }
 
   /**
@@ -180,6 +211,11 @@ export default class MyApp extends Homey.App {
         to: result.phase,
         transitions: result.transitions.map((t) => `${t.from}→${t.to}`),
       });
+      this._lastTransition = {
+        from: currentPhase,
+        to: result.phase,
+        at: now.toISOString(),
+      };
       await this._applyPhase(result.phase, config, currentPhase);
     }
 

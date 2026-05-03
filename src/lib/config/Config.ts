@@ -1,12 +1,5 @@
 import { z } from 'zod';
 
-export const RoleSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  devices: z.array(z.string()).optional(),
-});
-export type Role = z.infer<typeof RoleSchema>;
-
 export const PhaseSchema = z.enum(['NIGHT', 'MORNING', 'DAY', 'EVENING']);
 export type Phase = z.infer<typeof PhaseSchema>;
 
@@ -43,6 +36,7 @@ export const PhaseScheduleSchema = z.object({
 export type PhaseSchedule = z.infer<typeof PhaseScheduleSchema>;
 
 export const DimmingConfigSchema = z.object({
+  activeInPhases: z.array(PhaseSchema).min(1),
   source: z.enum(['indoor_downstairs', 'indoor_upstairs']),
   brightLux: z.number(),
   darkLux: z.number(),
@@ -51,10 +45,17 @@ export const DimmingConfigSchema = z.object({
 });
 export type DimmingConfig = z.infer<typeof DimmingConfigSchema>;
 
+export const RoleSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  devices: z.array(z.string()).optional(),
+  dimming: DimmingConfigSchema.optional(),
+});
+export type Role = z.infer<typeof RoleSchema>;
+
 export const RoleStateSchema = z.object({
   onoff: z.boolean(),
   dim: z.number().min(0).max(1).optional(),
-  dimming: DimmingConfigSchema.optional(),
 });
 export type RoleState = z.infer<typeof RoleStateSchema>;
 

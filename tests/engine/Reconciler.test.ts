@@ -677,6 +677,7 @@ describe('Reconciler', () => {
 
   describe('dynamic dimming via luxProvider', () => {
     const makeDimmingConfig = (overrides?: Partial<DimmingConfig>): DimmingConfig => ({
+      activeInPhases: ['MORNING', 'DAY', 'EVENING'],
       source: 'indoor_downstairs',
       brightLux: 100,
       darkLux: 20,
@@ -690,10 +691,8 @@ describe('Reconciler', () => {
       reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
 
       const config = makeConfig();
-      config.phases.MORNING.states.living = {
-        onoff: true,
-        dimming: makeDimmingConfig(),
-      };
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
 
       const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
       await vi.advanceTimersByTimeAsync(200);
@@ -713,10 +712,8 @@ describe('Reconciler', () => {
       reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
 
       const config = makeConfig();
-      config.phases.MORNING.states.living = {
-        onoff: true,
-        dimming: makeDimmingConfig(),
-      };
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
 
       const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
       await vi.advanceTimersByTimeAsync(200);
@@ -733,10 +730,8 @@ describe('Reconciler', () => {
       reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
 
       const config = makeConfig();
-      config.phases.MORNING.states.living = {
-        onoff: true,
-        dimming: makeDimmingConfig(),
-      };
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
 
       const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
       await vi.advanceTimersByTimeAsync(200);
@@ -753,11 +748,9 @@ describe('Reconciler', () => {
       reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
 
       const config = makeConfig();
-      config.phases.MORNING.states.living = {
-        onoff: true,
-        dim: 0.7,
-        dimming: makeDimmingConfig(),
-      };
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
+      config.phases.MORNING.states.living = { onoff: true, dim: 0.7 };
 
       const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
       await vi.advanceTimersByTimeAsync(200);
@@ -774,10 +767,9 @@ describe('Reconciler', () => {
       reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
 
       const config = makeConfig();
-      config.phases.MORNING.states.living = {
-        onoff: true,
-        dimming: makeDimmingConfig(),
-      };
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
+      config.phases.MORNING.states.living = { onoff: true };
 
       const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
       await vi.advanceTimersByTimeAsync(200);
@@ -795,10 +787,9 @@ describe('Reconciler', () => {
       reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
 
       const config = makeConfig();
-      config.phases.MORNING.states.living = {
-        onoff: true,
-        dimming: makeDimmingConfig(),
-      };
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
+      config.phases.MORNING.states.living = { onoff: true };
 
       // Transition to MORNING to establish state
       let promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
@@ -818,6 +809,66 @@ describe('Reconciler', () => {
       );
       expect(dimSkipped).toBeDefined();
       expect(dimSkipped!.reason).toBe('override-skip');
+    });
+
+    it('uses phase static target when current phase is NOT in activeInPhases', async () => {
+      const luxProvider = vi.fn().mockReturnValue(10);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig({ activeInPhases: ['MORNING', 'EVENING'] });
+      config.phases.NIGHT.states.living = { onoff: false };
+
+      const promise = reconciler.reconcile('NIGHT', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      // NIGHT is not in activeInPhases → static target (off) applies
+      const living1Onoff = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'onoff'
+      );
+      expect(living1Onoff).toBeDefined();
+      expect(living1Onoff!.value).toBe(false);
+    });
+
+    it('uses phase static target when luxProvider returns null', async () => {
+      const luxProvider = vi.fn().mockReturnValue(null);
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
+      config.phases.MORNING.states.living = { onoff: true, dim: 0.6 };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      const living1Dim = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'dim'
+      );
+      expect(living1Dim!.value).toBe(0.6);
+    });
+
+    it('turns light off when computed dim is 0 in an active phase', async () => {
+      const luxProvider = vi.fn().mockReturnValue(150); // bright
+      reconciler = new Reconciler(mockApi, { meshDelayMs: 10, luxProvider });
+
+      const config = makeConfig();
+      const livingRole = config.roles.find((r) => r.id === 'living')!;
+      livingRole.dimming = makeDimmingConfig();
+      config.phases.MORNING.states.living = { onoff: true, dim: 0.5 };
+
+      const promise = reconciler.reconcile('MORNING', config, roleDeviceMapping);
+      await vi.advanceTimersByTimeAsync(200);
+      const result = await promise;
+
+      const living1Onoff = result.applied.find(
+        (e) => e.deviceId === 'living-light-1' && e.capability === 'onoff'
+      );
+      expect(living1Onoff).toBeDefined();
+      expect(living1Onoff!.value).toBe(false);
     });
   });
 });

@@ -9,7 +9,7 @@
  * - Structured per-tick results for diagnostic visibility
  */
 
-import type { Phase, AppConfig, RoleState, DimmingConfig } from '../config/Config.js';
+import type { Phase, AppConfig, RoleState } from '../config/Config.js';
 import type {
   DeviceAPI,
   DeviceState,
@@ -93,27 +93,6 @@ export class Reconciler {
   }
 
   /**
-   * Resolves a RoleState, computing dynamic dim if a dimming config is present.
-   * Falls back to static dim when lux is unavailable or dimming is not configured.
-   */
-  private resolveTargetState(raw: RoleState): RoleState {
-    if (!raw.dimming) return raw;
-
-    const lux = this.luxProvider ? this.luxProvider() : null;
-    if (lux === null) return { onoff: raw.onoff, dim: raw.dim };
-
-    const computedDim = luxToDim({
-      lux,
-      brightLux: raw.dimming.brightLux,
-      darkLux: raw.dimming.darkLux,
-      brightDim: raw.dimming.brightDim,
-      darkDim: raw.dimming.darkDim,
-    });
-
-    return { onoff: raw.onoff, dim: computedDim };
-  }
-
-  /**
    * Reconciles devices to match the target phase state.
    *
    * In 'transition' mode (phase changed), all devices are updated to target state.
@@ -146,9 +125,39 @@ export class Reconciler {
     const phaseConfig = config.phases[phase];
     const roleStates = phaseConfig.states;
 
-    // Process each role in the phase configuration
+    // Build final target states: start with static phase targets,
+    // then override with lux-driven dimming where configured and active.
+    const finalTargets = new Map<string, RoleState>();
     for (const [roleId, rawTargetState] of Object.entries(roleStates)) {
-      const targetState = this.resolveTargetState(rawTargetState);
+      finalTargets.set(roleId, { ...rawTargetState });
+    }
+
+    // Twilight pass: lux-driven dimming overrides static targets
+    for (const role of config.roles) {
+      if (!role.dimming) continue;
+      if (!role.dimming.activeInPhases.includes(phase)) continue;
+      if (!finalTargets.has(role.id)) continue;
+
+      const lux = this.luxProvider ? this.luxProvider() : null;
+      if (lux === null) continue;
+
+      const computedDim = luxToDim({
+        lux,
+        brightLux: role.dimming.brightLux,
+        darkLux: role.dimming.darkLux,
+        brightDim: role.dimming.brightDim,
+        darkDim: role.dimming.darkDim,
+      });
+
+      if (computedDim > 0) {
+        finalTargets.set(role.id, { onoff: true, dim: computedDim });
+      } else {
+        finalTargets.set(role.id, { onoff: false, dim: computedDim });
+      }
+    }
+
+    // Process each role in the phase configuration
+    for (const [roleId, targetState] of finalTargets) {
       const deviceIds = roleDeviceMapping[roleId] ?? [];
 
       // Process each device assigned to this role
