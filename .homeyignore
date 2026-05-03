@@ -1,0 +1,30 @@
+# Dependencies & build artifacts
+node_modules/
+.homeybuild/
+
+# Tests
+tests/
+test/
+test-app/
+*.test.ts
+vitest.config.ts
+
+# Git
+.git/
+.gitignore
+
+# GSD / planning
+.gsd/
+.gsd-id
+
+# Build / dev scripts
+scripts/
+
+# Misc configs
+tsconfig.json
+.mcp.json
+
+# Temp / backup files
+api.js.bak
+test-holidays.js
+test-suncalc.js

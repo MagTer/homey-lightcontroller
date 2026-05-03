@@ -7,14 +7,25 @@ import {
   type SettingsStore,
 } from './src/lib/config/saveConfig.js';
 import { Phase, PhaseSchema } from './src/lib/config/Config.js';
+import { Reconciler } from './src/lib/engine/Reconciler.js';
+import { HomeyDeviceAPI } from './src/lib/engine/HomeyDeviceAPI.js';
+import { evaluatePhase, PHASE_ORDER } from './src/lib/engine/PhaseEngine.js';
+import { buildEvaluationContext } from './src/lib/engine/EvaluationContext.js';
+import { LuxAggregator } from './src/lib/engine/LuxAggregator.js';
+import type { RoleDeviceMapping } from './src/lib/engine/DeviceAPI.js';
+
+const TICK_INTERVAL_MS = 60_000;
 
 export default class MyApp extends Homey.App {
   private _forcedPhase: Phase | null = null;
   private _phaseChangedTrigger!: Homey.FlowCardTrigger;
+  private _reconciler!: Reconciler;
+  private _tickInterval: ReturnType<typeof setInterval> | null = null;
+  private _luxAggregator = new LuxAggregator();
 
   /**
    * Force the active phase to a specific value, bypassing automatic evaluation.
-   * Validates the input against PhaseSchema and logs all attempts.
+   * Validates the input against PhaseSchema, applies it to devices, and logs all attempts.
    */
   forcePhase(raw: unknown): Phase {
     let parsed: Phase;
@@ -28,6 +39,12 @@ export default class MyApp extends Homey.App {
 
     this._forcedPhase = parsed;
     this.log('forcePhase', { phase: parsed });
+
+    const config = this.getConfig();
+    if (config) {
+      this._applyPhase(parsed, config).catch(this.error);
+    }
+
     return parsed;
   }
 
@@ -67,8 +84,97 @@ export default class MyApp extends Homey.App {
     }
   }
 
+  /**
+   * Build a RoleDeviceMapping from config.roles[].devices.
+   */
+  private _buildRoleDeviceMapping(config: AppConfig): RoleDeviceMapping {
+    const mapping: RoleDeviceMapping = {};
+    for (const role of config.roles) {
+      if (role.devices && role.devices.length > 0) {
+        mapping[role.id] = role.devices;
+      }
+    }
+    return mapping;
+  }
+
+  /**
+   * Apply a phase: fire the Flow trigger and reconcile devices to the target state.
+   */
+  private async _applyPhase(phase: Phase, config: AppConfig): Promise<void> {
+    await this._phaseChangedTrigger.trigger({ phase });
+    const mapping = this._buildRoleDeviceMapping(config);
+    await this._reconciler.reconcile(phase, config, mapping);
+  }
+
+  /**
+   * Single evaluation tick: checks phase transitions and applies them.
+   * Respects forced-phase override when set.
+   */
+  private async _tick(): Promise<void> {
+    const config = this.getConfig();
+    if (!config) return;
+
+    const store = this.homey.settings as unknown as SettingsStore;
+    let currentPhase: Phase | null = store.get('currentPhase') as Phase | null;
+    const lastEvalTimeStr = store.get('lastEvalTime') as string | null;
+
+    if (!currentPhase || !PHASE_ORDER.includes(currentPhase)) {
+      currentPhase = 'NIGHT';
+    }
+    const lastEvalTime = lastEvalTimeStr ? new Date(lastEvalTimeStr) : new Date(0);
+
+    // If a phase is forced, apply it immediately and skip automatic evaluation
+    if (this._forcedPhase !== null) {
+      if (this._forcedPhase !== currentPhase) {
+        this.log('forced phase override', { from: currentPhase, to: this._forcedPhase });
+        await this._applyPhase(this._forcedPhase, config);
+        store.set('currentPhase', this._forcedPhase);
+        store.set('lastEvalTime', new Date().toISOString());
+      }
+      return;
+    }
+
+    const geo = this.homey.geolocation;
+    const ctx = buildEvaluationContext({
+      aggregator: this._luxAggregator,
+      now: new Date(),
+      latitude: geo.getLatitude(),
+      longitude: geo.getLongitude(),
+      countryCode: '',
+    });
+
+    const result = evaluatePhase(currentPhase, lastEvalTime, config, ctx);
+
+    if (result.transitions.length > 0) {
+      this.log('phase transition', {
+        from: currentPhase,
+        to: result.phase,
+        transitions: result.transitions.map((t) => `${t.from}→${t.to}`),
+      });
+      await this._applyPhase(result.phase, config);
+    }
+
+    store.set('currentPhase', result.phase);
+    store.set('lastEvalTime', result.lastEvalTime.toISOString());
+  }
+
   async onInit() {
     this.log('MyApp has been initialized');
+
+    // Create device API and reconciler
+    const deviceApi = new HomeyDeviceAPI(this.homey);
+    this._reconciler = new Reconciler(deviceApi);
+
+    // Register Flow action card
+    this.homey.flow
+      .getActionCard('set_phase')
+      .registerRunListener(async (args: { phase: Phase }) => {
+        this.forcePhase(args.phase);
+        return true;
+      });
+
+    // Register Flow trigger card
+    this._phaseChangedTrigger = this.homey.flow.getTriggerCard('phase_changed');
 
     const store = this.homey.settings as unknown as SettingsStore;
 
@@ -84,13 +190,21 @@ export default class MyApp extends Homey.App {
       return;
     }
 
-    this.homey.flow
-      .getActionCard('set_phase')
-      .registerRunListener(async (args: { phase: Phase }) => {
-        this.forcePhase(args.phase);
-        return true;
-      });
-    this._phaseChangedTrigger = this.homey.flow.getTriggerCard('phase_changed');
-    this.log('Flow cards registered');
+    // Start the evaluation engine
+    this._tickInterval = this.homey.setInterval(() => {
+      this._tick().catch(this.error);
+    }, TICK_INTERVAL_MS);
+
+    // Run an immediate tick so the app is responsive right after start
+    this._tick().catch(this.error);
+
+    this.log('Flow cards registered, engine started');
+  }
+
+  async onUninit() {
+    if (this._tickInterval !== null) {
+      this.homey.clearInterval(this._tickInterval);
+      this._tickInterval = null;
+    }
   }
 }

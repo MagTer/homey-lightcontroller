@@ -42,6 +42,7 @@ class TestableApp {
   errors: Array<{ msg: string; detail?: unknown }> = [];
   logs: string[] = [];
   flowCardsRegistered: boolean = false;
+  engineStarted: boolean = false;
 
   constructor(private store: SettingsStore) {}
 
@@ -69,9 +70,10 @@ class TestableApp {
       return;
     }
 
-    // Simulate flow card registration
+    // Simulate flow card registration + engine start
     this.flowCardsRegistered = true;
-    this.log('Flow cards registered');
+    this.engineStarted = true;
+    this.log('Flow cards registered, engine started');
   }
 }
 
@@ -103,8 +105,9 @@ describe('MyApp.onInit() — eager config validation guard', () => {
     expect(app.errors[0].msg).toMatch(/^onInit:/);
     expect(app.errors[0].msg).toMatch(/config missing/i);
 
-    // Flow cards should NOT be registered
+    // Flow cards and engine should NOT be registered/started
     expect(app.flowCardsRegistered).toBe(false);
+    expect(app.engineStarted).toBe(false);
   });
 
   it('invalid stored config: error with issues logged, no flow-card registration', () => {
@@ -126,8 +129,9 @@ describe('MyApp.onInit() — eager config validation guard', () => {
     const issues = (app.errors[0].detail as { issues: Array<{ path: unknown[]; message: string }> }).issues;
     expect(issues.length).toBeGreaterThan(0);
 
-    // Flow cards should NOT be registered
+    // Flow cards and engine should NOT be registered/started
     expect(app.flowCardsRegistered).toBe(false);
+    expect(app.engineStarted).toBe(false);
   });
 
   it('valid stored config: no errors, flow-card registration proceeds', () => {
@@ -139,11 +143,12 @@ describe('MyApp.onInit() — eager config validation guard', () => {
     // Should have zero errors
     expect(app.errors).toHaveLength(0);
 
-    // Flow cards should be registered
+    // Flow cards should be registered and engine started
     expect(app.flowCardsRegistered).toBe(true);
+    expect(app.engineStarted).toBe(true);
 
-    // Should have logged flow registration
-    expect(app.logs).toContain('Flow cards registered');
+    // Should have logged flow registration + engine start
+    expect(app.logs).toContain('Flow cards registered, engine started');
   });
 
   it('error message actionability: Zod issues have path and message', () => {

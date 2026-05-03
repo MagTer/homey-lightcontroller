@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepublish": "node scripts/prepublish.mjs",
+    "validate": "node scripts/prepublish.mjs",
     "test": "vitest run"
   },
   "dependencies": {

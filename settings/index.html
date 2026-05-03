@@ -4,111 +4,373 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Light Controller Settings</title>
+  <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
   <style>
     * { box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #333;
+      line-height: 1.5;
+      padding-bottom: 2rem;
     }
-    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-    .section { margin-bottom: 1.5rem; }
-    .roles-list { display: flex; flex-direction: column; gap: 12px; }
-    .role-card {
-      border: 1px solid #ddd;
+
+    /* Status messages */
+    .status-loading,
+    .status-error {
+      padding: 12px 16px;
       border-radius: 8px;
-      padding: 12px;
-      background: #fafafa;
+      margin: 16px;
+      font-size: 0.9375rem;
     }
+    .status-loading {
+      background: #e7f3ff;
+      border: 1px solid #b8daff;
+      color: #004085;
+    }
+    .status-error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    /* Info / help boxes */
+    .info-box {
+      background: #f7f9fa;
+      border: 1px solid #e2e6ea;
+      border-radius: 10px;
+      padding: 16px;
+      margin: 0 16px 16px;
+    }
+    .info-box h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: #222;
+    }
+    .info-box p {
+      margin: 0 0 8px;
+      font-size: 0.875rem;
+      color: #555;
+    }
+    .info-box p:last-child {
+      margin-bottom: 0;
+    }
+    .info-box .example {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8125rem;
+      color: #444;
+      margin-top: 4px;
+    }
+
+    /* Phase pills */
+    .phases-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .phase-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8125rem;
+      color: #444;
+    }
+    .phase-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-night   { background: #1a237e; }
+    .dot-morning { background: #f57c00; }
+    .dot-day     { background: #fdd835; }
+    .dot-evening { background: #7b1fa2; }
+
+    /* Roles list */
+    .roles-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .role-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .role-card.dragging {
+      opacity: 0.6;
+    }
+
     .role-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 10px;
+      padding: 14px 16px;
+      background: #fafbfc;
+      border-bottom: 1px solid #f0f0f0;
     }
-    .role-header label { font-weight: 600; min-width: 60px; }
-    .role-header input { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .remove-btn {
-      padding: 4px 12px;
-      background: #dc3545;
-      color: #fff;
+    .role-header .drag-handle {
+      cursor: grab;
+      color: #bbb;
+      font-size: 1.1rem;
+      line-height: 1;
+      user-select: none;
+    }
+    .role-header .drag-handle:active {
+      cursor: grabbing;
+    }
+    .role-header input[type="text"] {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 600;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.875rem;
+      background: transparent;
+      padding: 4px 0;
+      outline: none;
+      color: #222;
     }
-    .remove-btn:hover { background: #c82333; }
+    .role-header input[type="text"]::placeholder {
+      font-weight: 400;
+      color: #999;
+    }
+    .role-header .remove-btn {
+      padding: 6px 12px;
+      background: transparent;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .role-header .remove-btn:hover {
+      background: #ffebee;
+    }
+
+    .role-body {
+      padding: 14px 16px;
+    }
+    .role-body label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Device search + list */
+    .device-search {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      margin-bottom: 8px;
+      outline: none;
+    }
+    .device-search:focus {
+      border-color: #00c853;
+    }
+
     .devices-scroll {
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 8px;
-      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 6px 4px;
+      background: #fafbfc;
     }
     .device-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 0;
-    }
-    .device-item input[type="checkbox"] { width: 18px; height: 18px; }
-    .device-item label { cursor: pointer; }
-    .add-btn, .save-btn {
-      padding: 10px 20px;
-      border: none;
+      gap: 10px;
+      padding: 7px 10px;
       border-radius: 6px;
-      font-size: 1rem;
+      transition: background 0.1s;
+    }
+    .device-item:hover {
+      background: #f0f4f8;
+    }
+    .device-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #00c853;
       cursor: pointer;
+      flex-shrink: 0;
     }
-    .add-btn {
-      background: #6c757d;
-      color: #fff;
-    }
-    .add-btn:hover { background: #5a6268; }
-    .save-btn {
-      background: #28a745;
-      color: #fff;
-    }
-    .save-btn:hover { background: #218838; }
-    .save-btn:disabled {
-      background: #94d3a2;
-      cursor: not-allowed;
-    }
-    .actions {
+    .device-item label {
       display: flex;
-      gap: 12px;
-      margin-top: 1rem;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.9375rem;
+      font-weight: 400;
+      color: #333;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 0;
+      flex: 1;
     }
-    .loading, .error {
+    .device-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: #e8eaf6;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .device-hidden {
+      display: none !important;
+    }
+    .device-count {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: #888;
+    }
+    .empty-state-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    .empty-state p {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    /* Actions */
+    .actions {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .homey-button-primary-full {
+      width: 100%;
+    }
+    .add-role-btn {
+      width: 100%;
       padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 1rem;
+      background: #fff;
+      color: #00c853;
+      border: 2px dashed #c8e6c9;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      transition: all 0.15s;
     }
-    .loading { background: #e7f3ff; border: 1px solid #b8daff; color: #004085; }
-    .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    .add-role-btn:hover {
+      background: #f1f8e9;
+      border-color: #a5d6a7;
+    }
+
+    /* Collapsible sections */
+    details {
+      margin: 0 16px 12px;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #555;
+      padding: 8px 0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary::before {
+      content: '▸';
+      font-size: 0.75rem;
+      transition: transform 0.15s;
+      display: inline-block;
+    }
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    details .info-box {
+      margin: 0;
+    }
   </style>
 </head>
 <body>
-  <h1>Light Controller Settings</h1>
+  <header class="homey-header">
+    <h1 class="homey-title">Light Controller</h1>
+    <p class="homey-subtitle">Automate your lights through four daily phases</p>
+  </header>
+
   <div id="status"></div>
+
   <div id="app">
-    <div class="section">
-      <h2>Roles</h2>
-      <p>Assign devices to each role. Devices without the on/off capability are hidden.</p>
+    <!-- What is a role? -->
+    <details open>
+      <summary>What is a role?</summary>
+      <div class="info-box">
+        <p>
+          A <strong>role</strong> is a group of devices that should behave the same way during each phase of the day.
+          Instead of configuring every lamp individually, you assign lamps to a role and control them together.
+        </p>
+        <span class="example">💡 Example: create a "Living Room" role with your sofa lamp and ceiling light, then set them to dim to 30% in the EVENING and turn off at NIGHT.</span>
+      </div>
+    </details>
+
+    <!-- Phases overview -->
+    <details open>
+      <summary>The four phases</summary>
+      <div class="info-box">
+        <p>Your lights transition automatically between these phases based on time, sunrise/sunset, or light level.</p>
+        <div class="phases-row">
+          <span class="phase-pill"><span class="dot dot-night"></span> NIGHT — All off</span>
+          <span class="phase-pill"><span class="dot dot-morning"></span> MORNING — Gentle wake-up</span>
+          <span class="phase-pill"><span class="dot dot-day"></span> DAY — Natural light</span>
+          <span class="phase-pill"><span class="dot dot-evening"></span> EVENING — Cozy dim</span>
+        </div>
+      </div>
+    </details>
+
+    <!-- Roles section -->
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Roles & Devices</legend>
       <div id="roles-list" class="roles-list"></div>
-      <button type="button" class="add-btn" id="add-role-btn">+ Add Role</button>
-    </div>
+      <button type="button" class="add-role-btn" id="add-role-btn">+ Add Role</button>
+    </fieldset>
+
     <div class="actions">
-      <button type="button" class="save-btn" id="save-btn">Save</button>
+      <button type="button" class="homey-button-primary-full" id="save-btn">Save Configuration</button>
     </div>
   </div>
 
   <script>
     // Default phase config — used when creating a new config or filling missing phases.
-    // Each phase has placeholder time conditions (12:00 for all) and onoff:false states for all roles.
     function buildDefaultPhases(roleIds) {
       const defaultConditions = (time) => [{ type: 'time', at: time }];
       const makeSchedule = (time) => ({ conditions: defaultConditions(time) });
@@ -118,14 +380,13 @@
         return states;
       };
       return {
-        NIGHT: { weekday: makeSchedule('00:00'), weekend: makeSchedule('00:00'), states: makeStates() },
+        NIGHT:   { weekday: makeSchedule('00:00'), weekend: makeSchedule('00:00'), states: makeStates() },
         MORNING: { weekday: makeSchedule('06:00'), weekend: makeSchedule('07:00'), states: makeStates() },
-        DAY: { weekday: makeSchedule('09:00'), weekend: makeSchedule('10:00'), states: makeStates() },
+        DAY:     { weekday: makeSchedule('09:00'), weekend: makeSchedule('10:00'), states: makeStates() },
         EVENING: { weekday: makeSchedule('18:00'), weekend: makeSchedule('17:00'), states: makeStates() }
       };
     }
 
-    // Slugify a string to a role id (lowercase, hyphenated, alphanumeric).
     function toRoleSlug(name) {
       return name
         .toLowerCase()
@@ -133,39 +394,6 @@
         .replace(/^-+|-+$/g, '') || 'role';
     }
 
-    // Render the roles list into the DOM.
-    function renderRoles(roles, devices, container) {
-      container.innerHTML = '';
-      roles.forEach((role, idx) => {
-        const card = document.createElement('div');
-        card.className = 'role-card';
-        card.dataset.idx = idx;
-        card.innerHTML = `
-          <div class="role-header">
-            <label for="role-name-${idx}">Name:</label>
-            <input type="text" id="role-name-${idx}" value="${escHtml(role.name)}" placeholder="Role name" data-field="name">
-            <input type="hidden" value="${escHtml(role.id)}" data-field="id">
-            <button type="button" class="remove-btn" data-action="remove">Remove</button>
-          </div>
-          <div>
-            <strong>Devices:</strong>
-            <div class="devices-scroll">
-              ${devices.map((d) => `
-                <div class="device-item">
-                  <input type="checkbox" id="dev-${idx}-${escHtml(d.id)}" value="${escHtml(d.id)}"
-                    ${(role.devices || []).includes(d.id) ? ' checked' : ''}
-                    data-role-idx="${idx}" data-device-id="${escHtml(d.id)}">
-                  <label for="dev-${idx}-${escHtml(d.id)}">${escHtml(d.name)}</label>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // Escape HTML entities to prevent XSS.
     function escHtml(str) {
       return String(str)
         .replace(/&/g, '&amp;')
@@ -174,14 +402,65 @@
         .replace(/"/g, '&quot;');
     }
 
-    // Collect current form state into an AppConfig-shaped object.
+    function renderRoles(roles, devices, container) {
+      container.innerHTML = '';
+
+      if (roles.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🛋️</div>
+            <p>No roles yet. Add your first role to get started.</p>
+          </div>
+        `;
+        return;
+      }
+
+      roles.forEach((role, idx) => {
+        const card = document.createElement('div');
+        card.className = 'role-card';
+        card.dataset.idx = idx;
+
+        const checkedIds = new Set(role.devices || []);
+        const deviceListHtml = devices.map((d) => `
+          <div class="device-item" data-device-name="${escHtml(d.name.toLowerCase())}">
+            <input type="checkbox" id="dev-${idx}-${escHtml(d.id)}" value="${escHtml(d.id)}"
+              ${checkedIds.has(d.id) ? ' checked' : ''}
+              data-role-idx="${idx}" data-device-id="${escHtml(d.id)}">
+            <label for="dev-${idx}-${escHtml(d.id)}">
+              <span class="device-icon">💡</span>
+              ${escHtml(d.name)}
+            </label>
+          </div>
+        `).join('');
+
+        card.innerHTML = `
+          <div class="role-header">
+            <span class="drag-handle">⋮⋮</span>
+            <input type="text" value="${escHtml(role.name)}" placeholder="Role name (e.g. Living Room)" data-field="name">
+            <input type="hidden" value="${escHtml(role.id)}" data-field="id">
+            <button type="button" class="remove-btn" data-action="remove">Remove</button>
+          </div>
+          <div class="role-body">
+            <label>Assigned devices</label>
+            <input type="text" class="device-search" placeholder="Search devices…" data-search-idx="${idx}">
+            <div class="devices-scroll" id="devices-scroll-${idx}">
+              ${deviceListHtml}
+            </div>
+            <div class="device-count">
+              <span class="checked-count">${checkedIds.size}</span> of ${devices.length} selected
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
     function collectConfig() {
       const cards = document.querySelectorAll('.role-card');
       const roles = [];
       cards.forEach((card) => {
         const name = card.querySelector('[data-field="name"]').value.trim();
         const id = card.querySelector('[data-field="id"]').value;
-        // Collect checked device IDs for this role.
         const devices = [];
         card.querySelectorAll('input[type="checkbox"]:checked').forEach((cb) => {
           devices.push(cb.dataset.deviceId);
@@ -189,7 +468,6 @@
         roles.push({ id, name, devices });
       });
 
-      // Build default phases using the collected role ids.
       const roleIds = roles.map((r) => r.id);
       const phases = buildDefaultPhases(roleIds);
 
@@ -198,6 +476,13 @@
         roles,
         phases
       };
+    }
+
+    function updateCheckedCount(card) {
+      const checked = card.querySelectorAll('input[type="checkbox"]:checked').length;
+      const total = card.querySelectorAll('.device-item').length;
+      const countEl = card.querySelector('.checked-count');
+      if (countEl) countEl.textContent = checked;
     }
 
     function onHomeyReady(Homey) {
@@ -212,11 +497,11 @@
       let saving = false;
 
       function setStatus(msg, type) {
-        statusEl.innerHTML = `<div class="${type}">${msg}</div>`;
+        statusEl.innerHTML = `<div class="status-${type}">${escHtml(msg)}</div>`;
       }
 
       function showLoading() {
-        setStatus('Loading devices and config…', 'loading');
+        setStatus('Loading your devices…', 'loading');
         appEl.style.opacity = '0.5';
         appEl.style.pointerEvents = 'none';
       }
@@ -228,31 +513,17 @@
       }
 
       // Load config and devices in parallel.
+      showLoading();
       Promise.all([
-        Homey.api('GET', '/getConfig'),
-        Homey.api('GET', '/getDevices')
+        Homey.api('GET', '/config'),
+        Homey.api('GET', '/devices')
       ])
-        .then(([config, deviceCreds]) => {
-          // Fetch device list from Homey API using owner token.
-          return fetch(`${deviceCreds.localUrl}/api/v2/devices`, {
-            headers: { Authorization: `Bearer ${deviceCreds.token}` }
-          })
-            .then((res) => {
-              if (!res.ok) throw new Error(`Device API error: ${res.status}`);
-              return res.json();
-            })
-            .then((data) => {
-              // Filter to devices with onoff capability.
-              const onoffDevices = (data.data || []).filter((d) =>
-                (d.capabilities || []).includes('onoff')
-              );
-              return { config, onoffDevices };
-            });
+        .then(([config, onoffDevices]) => {
+          return { config, onoffDevices: onoffDevices || [] };
         })
         .then(({ config, onoffDevices }) => {
           hideLoading();
 
-          // Parse roles from config — NIGHT phase states hold role definitions.
           let roles = [];
           if (config && config.phases && config.phases.NIGHT && config.phases.NIGHT.states) {
             roles = Object.keys(config.phases.NIGHT.states).map((id) => {
@@ -278,15 +549,21 @@
       addRoleBtn.addEventListener('click', () => {
         const roles = window.__roles || [];
         const devices = window.__onoffDevices || [];
-        // Generate a tentative id from a placeholder name; user will rename.
         const tempName = 'New Role';
         const tempId = toRoleSlug(tempName) + '-' + Date.now();
         roles.push({ id: tempId, name: tempName, devices: [] });
         window.__roles = roles;
         renderRoles(roles, devices, rolesListEl);
+
+        // Focus the new role's name input
+        const inputs = rolesListEl.querySelectorAll('[data-field="name"]');
+        if (inputs.length > 0) {
+          inputs[inputs.length - 1].focus();
+          inputs[inputs.length - 1].select();
+        }
       });
 
-      // Remove a role by clicking its Remove button.
+      // Remove a role.
       rolesListEl.addEventListener('click', (e) => {
         if (e.target.dataset.action !== 'remove') return;
         const card = e.target.closest('.role-card');
@@ -298,19 +575,37 @@
         renderRoles(roles, devices, rolesListEl);
       });
 
-      // Keep role id stable once assigned; only update name unless id is still the temp form.
+      // Update role name and id.
       rolesListEl.addEventListener('input', (e) => {
-        if (e.target.dataset.field !== 'name') return;
-        const card = e.target.closest('.role-card');
-        const idx = parseInt(card.dataset.idx, 10);
-        const roles = window.__roles || [];
-        const newName = e.target.value.trim();
-        // If the id still looks like a temp id (contains a timestamp segment), reassign.
-        if (roles[idx].id.match(/-\d+$/)) {
-          roles[idx].id = toRoleSlug(newName);
+        if (e.target.dataset.field === 'name') {
+          const card = e.target.closest('.role-card');
+          const idx = parseInt(card.dataset.idx, 10);
+          const roles = window.__roles || [];
+          const newName = e.target.value.trim();
+          if (roles[idx].id.match(/-\d+$/)) {
+            roles[idx].id = toRoleSlug(newName);
+          }
+          roles[idx].name = newName;
+          window.__roles = roles;
         }
-        roles[idx].name = newName;
-        window.__roles = roles;
+
+        // Device search filtering
+        if (e.target.classList.contains('device-search')) {
+          const card = e.target.closest('.role-card');
+          const query = e.target.value.toLowerCase();
+          card.querySelectorAll('.device-item').forEach((item) => {
+            const name = item.dataset.deviceName;
+            item.classList.toggle('device-hidden', !name.includes(query));
+          });
+        }
+      });
+
+      // Update checked count when checkboxes change.
+      rolesListEl.addEventListener('change', (e) => {
+        if (e.target.type === 'checkbox') {
+          const card = e.target.closest('.role-card');
+          updateCheckedCount(card);
+        }
       });
 
       // Save button handler.
@@ -318,19 +613,20 @@
         if (saving) return;
         saving = true;
         saveBtn.disabled = true;
+        const originalText = saveBtn.textContent;
         saveBtn.textContent = 'Saving…';
 
         const config = collectConfig();
 
         try {
-          await Homey.api('POST', '/saveConfig', config);
-          Homey.alert('Saved!');
+          await Homey.api('POST', '/config', config);
+          Homey.alert('Saved! Your lights will now follow the configured phases.');
         } catch (err) {
           Homey.alert('Save failed: ' + err.message);
         } finally {
           saving = false;
           saveBtn.disabled = false;
-          saveBtn.textContent = 'Save';
+          saveBtn.textContent = originalText;
         }
       });
     }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const RoleSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  devices: z.array(z.string()).optional(),
 });
 export type Role = z.infer<typeof RoleSchema>;
 
