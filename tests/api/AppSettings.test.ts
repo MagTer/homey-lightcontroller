@@ -131,4 +131,80 @@ describe('AppSettings helpers (saveConfig / getConfig)', () => {
       }
     });
   });
+
+  describe('lastTransition persistence (mirrors MyApp behavior)', () => {
+    type Transition = { from: string | null; to: string; at: string };
+
+    // Minimal mirror of the persistence contract in app.ts
+    class TestableApp {
+      lastTransition: Transition | null = null;
+      constructor(private store: SettingsStore) {}
+
+      onInit() {
+        const stored = this.store.get('lastTransition') as Transition | null;
+        if (stored) {
+          this.lastTransition = stored;
+        }
+      }
+
+      recordTransition(from: string | null, to: string, at: Date) {
+        this.lastTransition = { from, to, at: at.toISOString() };
+        this.store.set('lastTransition', this.lastTransition);
+      }
+
+      getStatus() {
+        return { lastTransition: this.lastTransition };
+      }
+    }
+
+    it('restores lastTransition from settings on init', () => {
+      const { store, written } = makeStore();
+      const previous = { from: 'NIGHT', to: 'MORNING', at: '2026-01-15T06:00:00.000Z' };
+      written.set('lastTransition', clone(previous));
+
+      const app = new TestableApp(store);
+      app.onInit();
+
+      expect(app.getStatus().lastTransition).toEqual(previous);
+    });
+
+    it('starts with null lastTransition when settings has no record', () => {
+      const { store } = makeStore();
+      const app = new TestableApp(store);
+
+      app.onInit();
+
+      expect(app.getStatus().lastTransition).toBeNull();
+    });
+
+    it('persists lastTransition to settings when a transition occurs', () => {
+      const { store, written } = makeStore();
+      const app = new TestableApp(store);
+
+      const at = new Date('2026-01-15T06:00:00.000Z');
+      app.recordTransition('NIGHT', 'MORNING', at);
+
+      expect(app.getStatus().lastTransition).toEqual({
+        from: 'NIGHT',
+        to: 'MORNING',
+        at: at.toISOString()
+      });
+      expect(written.get('lastTransition')).toEqual({
+        from: 'NIGHT',
+        to: 'MORNING',
+        at: at.toISOString()
+      });
+    });
+
+    it('overwrites a previously persisted lastTransition', () => {
+      const { store, written } = makeStore();
+      const app = new TestableApp(store);
+
+      app.recordTransition('NIGHT', 'MORNING', new Date('2026-01-15T06:00:00.000Z'));
+      app.recordTransition('MORNING', 'DAY', new Date('2026-01-15T11:00:00.000Z'));
+
+      expect(app.getStatus().lastTransition?.to).toBe('DAY');
+      expect((written.get('lastTransition') as Transition | undefined)?.to).toBe('DAY');
+    });
+  });
 });

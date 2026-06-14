@@ -25,22 +25,22 @@ export interface EvalResult {
 }
 
 /**
- * Creates a Date from an HH:MM string for a specific base date (in UTC timezone)
- * Uses setUTCHours to ensure consistent UTC behavior
+ * Creates a Date from an HH:MM string for a specific base date in the hub's local timezone.
+ * Uses setHours so the time condition is interpreted as local wall-clock time.
  */
 function parseTimeForDate(timeStr: string, baseDate: Date): Date {
   const [hours, minutes] = timeStr.split(':').map(Number);
   const result = new Date(baseDate);
-  result.setUTCHours(hours!, minutes!, 0, 0);
+  result.setHours(hours!, minutes!, 0, 0);
   return result;
 }
 
 /**
- * Creates yesterday's date from a given date (UTC-aware)
+ * Creates yesterday's date from a given date (local-time aware)
  */
 function getYesterday(date: Date): Date {
   const result = new Date(date);
-  result.setUTCDate(result.getUTCDate() - 1);
+  result.setDate(result.getDate() - 1);
   return result;
 }
 

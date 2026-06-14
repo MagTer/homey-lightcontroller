@@ -75,7 +75,13 @@ export type SensorsConfig = z.infer<typeof SensorsSchema>;
 
 export const AppConfigSchema = z.object({
   version: z.string().min(1),
-  roles: z.array(RoleSchema),
+  roles: z.array(RoleSchema).refine(
+    (roles) => {
+      const ids = roles.map((r) => r.id);
+      return new Set(ids).size === ids.length;
+    },
+    { message: 'Role IDs must be unique' }
+  ),
   phases: z.object({
     NIGHT: PhaseConfigSchema,
     MORNING: PhaseConfigSchema,

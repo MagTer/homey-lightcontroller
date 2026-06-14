@@ -13,8 +13,8 @@ const SIZES = [
   { name: 'xlarge', width: 1000, height: 700 },
 ];
 
-// Homey green brand colour
-const HOMEY_GREEN = { r: 30, g: 144, b: 255, alpha: 1 };
+// App brand colour from .homeycompose/app.json (#F5A623)
+const BRAND_COLOR = { r: 245, g: 166, b: 35, alpha: 1 };
 
 async function generateImage(size, name) {
   const outPath = join(imagesDir, `${name}.png`);
@@ -41,7 +41,7 @@ async function generateImage(size, name) {
         width: size.width,
         height: size.height,
         channels: 4,
-        background: HOMEY_GREEN,
+        background: BRAND_COLOR,
       },
     })
       .png({ palette: false, compressionLevel: 9 })

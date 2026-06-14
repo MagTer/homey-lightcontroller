@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import putPhaseHandler from '../../src/api.js';
 
 // The putPhase handler is the default export's putPhase method.
 // We import the whole module and call putPhase directly.

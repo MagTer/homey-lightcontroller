@@ -3,10 +3,13 @@ import { evaluatePhase, evaluatePhaseConditions, PHASE_ORDER, type TransitionRec
 import type { AppConfig, Phase, PhaseSchedule } from '../../src/lib/config/Config.js';
 import type { EvaluationContext } from '../../src/lib/engine/EvaluationContext.js';
 
+// Pin tests to a non-UTC timezone so local-time interpretation is explicit.
+process.env.TZ = 'Europe/Amsterdam';
+
 // Helper to create a context with specific date
 function makeCtx(overrides: Partial<EvaluationContext> = {}): EvaluationContext {
   return {
-    now: new Date('2026-01-15T12:00:00Z'), // Thursday
+    now: new Date('2026-01-15T12:00:00Z'), // Thursday, 13:00 local
     lux: null,
     latitude: 52.37, // Amsterdam
     longitude: 4.90,
@@ -50,8 +53,9 @@ describe('PhaseEngine', () => {
   describe('standard progression', () => {
     it('transitions from NIGHT to MORNING when time passes 07:00 on weekday', () => {
       const config = makeConfig();
-      const lastEvalTime = new Date('2026-01-15T06:59:00Z'); // Just before 07:00
-      const now = new Date('2026-01-15T07:01:00Z'); // Just after 07:00
+      // 07:00 local CET = 06:00 UTC
+      const lastEvalTime = new Date('2026-01-15T05:59:00Z'); // 06:59 local
+      const now = new Date('2026-01-15T06:01:00Z'); // 07:01 local
       const ctx = makeCtx({ now });
 
       const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
@@ -63,13 +67,14 @@ describe('PhaseEngine', () => {
         to: 'MORNING',
         reason: 'time'
       });
-      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T07:00:00Z'));
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T06:00:00Z'));
     });
 
     it('transitions from MORNING to DAY when time passes 12:00', () => {
       const config = makeConfig();
-      const lastEvalTime = new Date('2026-01-15T11:59:00Z');
-      const now = new Date('2026-01-15T12:01:00Z');
+      // 12:00 local CET = 11:00 UTC
+      const lastEvalTime = new Date('2026-01-15T10:59:00Z'); // 11:59 local
+      const now = new Date('2026-01-15T11:01:00Z'); // 12:01 local
       const ctx = makeCtx({ now });
 
       const result = evaluatePhase('MORNING', lastEvalTime, config, ctx);
@@ -81,14 +86,43 @@ describe('PhaseEngine', () => {
         to: 'DAY',
         reason: 'time'
       });
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T11:00:00Z'));
+    });
+  });
+
+  describe('local-time interpretation', () => {
+    it('a time condition at 08:00 triggers at 08:00 local time, not UTC', () => {
+      // In Europe/Amsterdam (CET, UTC+1 in January), 08:00 local = 07:00 UTC.
+      const lastEvalTime = new Date('2026-01-15T06:59:00Z'); // 07:59 local
+      const now = new Date('2026-01-15T07:01:00Z'); // 08:01 local
+      const ctx = makeCtx({ now });
+
+      const config = makeConfig({
+        phases: {
+          ...makeConfig().phases,
+          MORNING: {
+            weekday: { conditions: [{ type: 'time', at: '08:00' }] },
+            weekend: { conditions: [{ type: 'time', at: '08:00' }] },
+            states: { living: { onoff: true, dim: 0.5 } }
+          }
+        }
+      });
+
+      const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
+
+      expect(result.phase).toBe('MORNING');
+      expect(result.transitions).toHaveLength(1);
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T07:00:00Z'));
+      expect(result.transitions[0].eventTime.getHours()).toBe(8);
+      expect(result.transitions[0].eventTime.getMinutes()).toBe(0);
     });
   });
 
   describe('no-trigger no-op', () => {
     it('stays in NIGHT when no transition time has passed', () => {
       const config = makeConfig();
-      const lastEvalTime = new Date('2026-01-15T02:00:00Z');
-      const now = new Date('2026-01-15T03:00:00Z'); // Still before 07:00
+      const lastEvalTime = new Date('2026-01-15T02:00:00Z'); // 03:00 local
+      const now = new Date('2026-01-15T03:00:00Z'); // 04:00 local, still before 07:00
       const ctx = makeCtx({ now });
 
       const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
@@ -100,8 +134,8 @@ describe('PhaseEngine', () => {
 
     it('stays in DAY during midday', () => {
       const config = makeConfig();
-      const lastEvalTime = new Date('2026-01-15T13:00:00Z');
-      const now = new Date('2026-01-15T14:00:00Z'); // Between 12:00 and 20:00
+      const lastEvalTime = new Date('2026-01-15T13:00:00Z'); // 14:00 local
+      const now = new Date('2026-01-15T14:00:00Z'); // 15:00 local, between 12:00 and 20:00
       const ctx = makeCtx({ now });
 
       const result = evaluatePhase('DAY', lastEvalTime, config, ctx);
@@ -131,29 +165,28 @@ describe('PhaseEngine', () => {
         }
       };
 
-      // lastEvalTime at 22:30 on Jan 15, now at 00:30 on Jan 16 (crosses midnight)
-      const lastEvalTime = new Date('2026-01-15T22:30:00Z');
-      const now = new Date('2026-01-16T00:30:00Z');
+      // lastEvalTime at 22:30 local on Jan 15 (21:30 UTC), now at 00:30 local on Jan 16 (23:30 UTC)
+      const lastEvalTime = new Date('2026-01-15T21:30:00Z');
+      const now = new Date('2026-01-15T23:30:00Z');
 
       const result = evaluatePhase('DAY', lastEvalTime, config, makeCtx({ now }));
 
       expect(result.transitions).toHaveLength(2);
-      // First: DAY -> EVENING at 23:00 on Jan 15
+      // First: DAY -> EVENING at 23:00 local on Jan 15 = 22:00 UTC
       expect(result.transitions[0]).toMatchObject({
         from: 'DAY',
         to: 'EVENING',
         reason: 'time'
       });
-      // eventTime should be 23:00 on Jan 15 (previous calendar day)
-      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T23:00:00Z'));
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T22:00:00Z'));
 
-      // Second: EVENING -> NIGHT at 00:00 on Jan 16
+      // Second: EVENING -> NIGHT at 00:00 local on Jan 16 = 23:00 UTC Jan 15
       expect(result.transitions[1]).toMatchObject({
         from: 'EVENING',
         to: 'NIGHT',
         reason: 'time'
       });
-      expect(result.transitions[1].eventTime).toEqual(new Date('2026-01-16T00:00:00Z'));
+      expect(result.transitions[1].eventTime).toEqual(new Date('2026-01-15T23:00:00Z'));
 
       expect(result.phase).toBe('NIGHT');
     });
@@ -162,10 +195,10 @@ describe('PhaseEngine', () => {
   describe('holiday -> weekend schedule', () => {
     it('uses weekend schedule on Dutch public holiday (Christmas)', () => {
       // Dec 25, 2026 is a Friday (Christmas Day) - public holiday in NL
-      const christmas2026 = new Date('2026-12-25T08:00:00Z'); // Friday
+      const christmas2026 = new Date('2026-12-25T08:00:00Z'); // Friday, 09:00 local
       expect(christmas2026.getDay()).toBe(5); // Verify it's Friday
 
-      // Config where weekend MORNING fires at 08:00, weekday at 07:00
+      // Config where weekend MORNING fires at 09:00, weekday at 07:00
       const config: AppConfig = {
         version: '1.0.0',
         roles: [{ id: 'living', name: 'Living Room' }],
@@ -194,20 +227,21 @@ describe('PhaseEngine', () => {
       };
 
       const ctx = makeCtx({
-        now: new Date('2026-12-25T09:30:00Z'), // After 09:00 (weekend time)
+        now: new Date('2026-12-25T09:30:00Z'), // 10:30 local, after 09:00 weekend time
         countryCode: 'NL'
       });
 
-      // lastEvalTime at 08:00 (after 07:00 but before 09:00)
-      const lastEvalTime = new Date('2026-12-25T08:00:00Z');
+      // lastEvalTime at 08:30 local (07:30 UTC): after weekday 07:00 local,
+      // before weekend 09:00 local. Only a holiday/weekend should trigger.
+      const lastEvalTime = new Date('2026-12-25T07:30:00Z');
 
       const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
 
-      // Should be MORNING because we're using weekend schedule (09:00 trigger)
+      // Should be MORNING because we're using weekend schedule (09:00 local trigger)
       expect(result.phase).toBe('MORNING');
       expect(result.transitions).toHaveLength(1);
       expect(result.transitions[0].to).toBe('MORNING');
-      expect(result.transitions[0].eventTime).toEqual(new Date('2026-12-25T09:00:00Z'));
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-12-25T08:00:00Z'));
     });
   });
 
@@ -215,26 +249,24 @@ describe('PhaseEngine', () => {
     it('cycles through all phases over clamped 24h window from old lastEvalTime', () => {
       const config = makeConfig();
 
-      // Set lastEvalTime to 30 hours ago - should be clamped to 24h
-      // Window becomes 24h ago to now: Jan 14 12:00 → Jan 15 12:00
-      // At 12:00 on Jan 15, we'll have seen:
-      // - MORNING at 07:00 (within window)
-      // - DAY at 12:00 (within window)
-      const now = new Date('2026-01-15T12:00:00Z');
+      // Set lastEvalTime to 30 hours ago - should be clamped to 24h.
+      // With CET, MORNING at 07:00 local = 06:00 UTC and DAY at 12:00 local = 11:00 UTC.
+      // Choose now late enough so the 24h window includes 06:00 UTC today.
+      const now = new Date('2026-01-15T18:00:00Z'); // 19:00 local
       const lastEvalTime = new Date(now.getTime() - 30 * 60 * 60 * 1000); // 30h ago
 
       const ctx = makeCtx({ now });
 
       const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
 
-      // Window is 24h: 2026-01-14T12:00:00Z to 2026-01-15T12:00:00Z
-      // Starting at NIGHT, we see MORNING at 07:00 and DAY at 12:00
       expect(result.phase).toBe('DAY');
       expect(result.transitions).toHaveLength(2);
 
       // Verify the sequence
       expect(result.transitions[0]).toMatchObject({ from: 'NIGHT', to: 'MORNING' });
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-15T06:00:00Z'));
       expect(result.transitions[1]).toMatchObject({ from: 'MORNING', to: 'DAY' });
+      expect(result.transitions[1].eventTime).toEqual(new Date('2026-01-15T11:00:00Z'));
     });
   });
 
@@ -315,7 +347,7 @@ describe('PhaseEngine', () => {
       };
 
       const now = new Date('2026-01-15T12:00:00Z');
-      const lastEvalTime = new Date('2026-01-15T11:00:00Z'); // After 07:00, before lux check
+      const lastEvalTime = new Date('2026-01-15T11:00:00Z'); // After 07:00 local, before lux check
 
       const ctx = makeCtx({ now, lux: 250 }); // Lux > 100, triggers DAY
 
@@ -466,18 +498,19 @@ describe('PhaseEngine', () => {
       };
 
       // Tuesday Jan 13, 2026 with empty countryCode
-      const now = new Date('2026-01-13T08:00:00Z'); // Tuesday
-      expect(now.getDay()).toBe(2); // Verify Tuesday
+      const now = new Date('2026-01-13T08:00:00Z'); // Tuesday, 09:00 local
+      expect(now.getDay()).toBe(2); // Verify it's Tuesday
 
-      const lastEvalTime = new Date('2026-01-13T06:00:00Z');
+      // 07:00 local = 06:00 UTC
+      const lastEvalTime = new Date('2026-01-13T05:00:00Z'); // 06:00 local
       const ctx = makeCtx({ now, countryCode: '' });
 
       const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
 
-      // Should use weekday schedule (07:00 trigger), not weekend (09:00)
+      // Should use weekday schedule (07:00 local trigger), not weekend (09:00 local)
       expect(result.phase).toBe('MORNING');
       expect(result.transitions).toHaveLength(1);
-      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-13T07:00:00Z'));
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-13T06:00:00Z'));
     });
 
     it('uses weekend schedule on Saturday with empty countryCode', () => {
@@ -509,18 +542,19 @@ describe('PhaseEngine', () => {
       };
 
       // Saturday Jan 17, 2026 with empty countryCode
-      const now = new Date('2026-01-17T10:00:00Z'); // Saturday
-      expect(now.getDay()).toBe(6); // Verify Saturday
+      const now = new Date('2026-01-17T10:00:00Z'); // Saturday, 11:00 local
+      expect(now.getDay()).toBe(6); // Verify it's Saturday
 
-      const lastEvalTime = new Date('2026-01-17T06:00:00Z');
+      // 09:00 local = 08:00 UTC
+      const lastEvalTime = new Date('2026-01-17T06:00:00Z'); // 07:00 local
       const ctx = makeCtx({ now, countryCode: '' });
 
       const result = evaluatePhase('NIGHT', lastEvalTime, config, ctx);
 
-      // Should use weekend schedule (09:00 trigger), not weekday (07:00)
+      // Should use weekend schedule (09:00 local trigger), not weekday (07:00 local)
       expect(result.phase).toBe('MORNING');
       expect(result.transitions).toHaveLength(1);
-      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-17T09:00:00Z'));
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-01-17T08:00:00Z'));
     });
 
     it('handles invalid country code gracefully with fallback to weekday/weekend', () => {
@@ -529,9 +563,10 @@ describe('PhaseEngine', () => {
       // on actual initialization failures (rare). This test documents that behavior.
 
       // Use a different date to avoid cache from earlier tests
-      const now = new Date('2026-06-15T12:00:00Z'); // Monday
-      // Need a window that crosses a time trigger (12:00 for DAY)
-      const lastEvalTime = new Date('2026-06-15T11:30:00Z'); // Before 12:00
+      const now = new Date('2026-06-15T12:00:00Z'); // Monday, 14:00 local (CEST)
+      // Need a window that crosses a time trigger (12:00 local for DAY)
+      // 12:00 local CEST = 10:00 UTC
+      const lastEvalTime = new Date('2026-06-15T09:30:00Z'); // 11:30 local
 
       const ctx = makeCtx({
         now,
@@ -543,10 +578,11 @@ describe('PhaseEngine', () => {
       // Should still work correctly without crashing
       const result = evaluatePhase('MORNING', lastEvalTime, config, ctx);
 
-      // Uses weekday schedule (12:00 trigger) since it's Monday
+      // Uses weekday schedule (12:00 local trigger) since it's Monday
       expect(result.phase).toBe('DAY');
       expect(result.transitions).toHaveLength(1);
       expect(result.transitions[0].to).toBe('DAY');
+      expect(result.transitions[0].eventTime).toEqual(new Date('2026-06-15T10:00:00Z'));
     });
   });
 
@@ -558,14 +594,16 @@ describe('PhaseEngine', () => {
 
   describe('type-priority tiebreak', () => {
     it('(a) time vs solar at identical eventTimes → time wins', () => {
-      const now = new Date('2026-01-15T07:00:00Z');
-      const evalTime = new Date('2026-01-15T06:59:00Z');
+      // Align time '09:00' local (08:00 UTC) with solar sunrise + 20 min.
+      // Jan 15 Amsterdam sunrise is ~07:40 UTC, so +20 min = 08:00 UTC.
+      const now = new Date('2026-01-15T08:00:00Z'); // 09:00 local
+      const evalTime = new Date('2026-01-15T07:59:00Z'); // 08:59 local
 
       // Schedule with solar first, then time (solar comes first to prove iteration order doesn't decide)
       const schedule: PhaseSchedule = {
         conditions: [
-          { type: 'solar', event: 'sunrise', offsetMinutes: 0 },
-          { type: 'time', at: '07:00' }
+          { type: 'solar', event: 'sunrise', offsetMinutes: 20 },
+          { type: 'time', at: '09:00' }
         ]
       };
 
@@ -575,23 +613,24 @@ describe('PhaseEngine', () => {
 
       expect(result.triggered).toBe(true);
       expect(result.reason).toBe('time');
-      expect(result.eventTime?.getTime()).toBe(new Date('2026-01-15T07:00:00Z').getTime());
+      expect(result.eventTime?.getTime()).toBe(new Date('2026-01-15T08:00:00Z').getTime());
     });
 
     it('(b) time vs lux at identical eventTimes → time wins', () => {
-      const now = new Date('2026-01-15T07:00:00Z');
-      const evalTime = new Date('2026-01-15T06:59:00Z');
+      // 09:00 local = 08:00 UTC
+      const now = new Date('2026-01-15T08:00:00Z');
+      const evalTime = new Date('2026-01-15T07:59:00Z');
 
       // Schedule with lux first, then time
       const schedule: PhaseSchedule = {
         conditions: [
           { type: 'lux', operator: 'lt', value: 100 },
-          { type: 'time', at: '07:00' }
+          { type: 'time', at: '09:00' }
         ]
       };
 
-      // lux: 0 < 100 triggers at 'now' (07:00:00Z)
-      // time: '07:00' also resolves to 07:00:00Z
+      // lux: 0 < 100 triggers at 'now' (08:00:00Z)
+      // time: '09:00' local also resolves to 08:00:00Z
       const ctx = makeCtx({ now, lux: 0 });
 
       const result = evaluatePhaseConditions(schedule, ctx, evalTime);
@@ -649,10 +688,10 @@ describe('PhaseEngine', () => {
     });
 
     it('(d) distinct timestamps — earliest wins regardless of type', () => {
-      const now = new Date('2026-01-15T12:00:00Z');
-      const evalTime = new Date('2026-01-15T06:59:00Z');
+      const now = new Date('2026-01-15T12:00:00Z'); // 13:00 local
+      const evalTime = new Date('2026-01-15T05:59:00Z'); // 06:59 local
 
-      // Schedule with lux first (triggers at 12:00), then time (triggers at 07:00)
+      // Schedule with lux first (triggers at 12:00 UTC = 13:00 local), then time (triggers at 07:00 local = 06:00 UTC)
       const schedule: PhaseSchedule = {
         conditions: [
           { type: 'lux', operator: 'lt', value: 100 },
@@ -661,15 +700,15 @@ describe('PhaseEngine', () => {
       };
 
       // lux triggers at 'now' (12:00:00Z)
-      // time triggers at 07:00:00Z (earlier)
+      // time triggers at 06:00:00Z (earlier)
       const ctx = makeCtx({ now, lux: 0 });
 
       const result = evaluatePhaseConditions(schedule, ctx, evalTime);
 
-      // 07:00 is earlier than 12:00, so time should win
+      // 06:00 UTC is earlier than 12:00 UTC, so time should win
       expect(result.triggered).toBe(true);
       expect(result.reason).toBe('time');
-      expect(result.eventTime?.getTime()).toBe(new Date('2026-01-15T07:00:00Z').getTime());
+      expect(result.eventTime?.getTime()).toBe(new Date('2026-01-15T06:00:00Z').getTime());
     });
   });
 });

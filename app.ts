@@ -166,6 +166,35 @@ export default class MyApp extends Homey.App {
     }
   }
 
+  /**
+   * Resolve the ISO country code for public-holiday detection.
+   * Tries Homey i18n APIs first, then falls back to an empty string if
+   * no reliable source is available.
+   */
+  private _resolveCountryCode(): string {
+    const i18n = this.homey.i18n as any;
+
+    // Some Homey firmware versions expose the hub's country via i18n options.
+    const optionCode = typeof i18n.getOption === 'function'
+      ? i18n.getOption('countryCode')
+      : undefined;
+    if (optionCode && typeof optionCode === 'string') {
+      return optionCode;
+    }
+
+    // Alternative shape used by some SDK versions.
+    const units = typeof i18n.getUnits === 'function' ? i18n.getUnits() : undefined;
+    const unitsCode = units && typeof units === 'object' ? (units as any).countryCode : undefined;
+    if (unitsCode && typeof unitsCode === 'string') {
+      return unitsCode;
+    }
+
+    // Deriving a country code from raw lat/lon would require an external
+    // geocoding service; skip it and let the engine fall back to plain
+    // weekday/weekend detection.
+    return '';
+  }
+
   private async _tick(): Promise<void> {
     const config = this.getConfig();
     if (!config) return;
@@ -200,7 +229,7 @@ export default class MyApp extends Homey.App {
       now,
       latitude: geo.getLatitude(),
       longitude: geo.getLongitude(),
-      countryCode: '',
+      countryCode: this._resolveCountryCode(),
     });
 
     const result = evaluatePhase(currentPhase, lastEvalTime, config, ctx);
@@ -216,6 +245,7 @@ export default class MyApp extends Homey.App {
         to: result.phase,
         at: now.toISOString(),
       };
+      store.set('lastTransition', this._lastTransition);
       await this._applyPhase(result.phase, config, currentPhase);
     }
 
@@ -253,6 +283,13 @@ export default class MyApp extends Homey.App {
     this._phaseChangedTrigger = this.homey.flow.getTriggerCard('phase_changed');
 
     const store = this.homey.settings as unknown as SettingsStore;
+
+    const storedLastTransition = store.get('lastTransition') as
+      | { from: Phase | null; to: Phase; at: string }
+      | null;
+    if (storedLastTransition) {
+      this._lastTransition = storedLastTransition;
+    }
 
     const raw = getConfigFromStore(store);
     if (raw === null) {

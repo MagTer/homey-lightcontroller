@@ -1,5 +1,5 @@
 /**
- * Pre-publish validation gate for Homey App Store submission.
+ * Publish validation gate for Homey App Store submission.
  *
  * Validates:
  *   1. All declared store images are 8-bit, non-indexed PNGs (bit depth 8, color type 2 or 6).
@@ -9,7 +9,7 @@
  *
  * Negative-test reminder (for future maintainers):
  *   Temporarily rename one image (e.g. `mv assets/images/small.png assets/images/small.png.bak`)
- *   and re-run `npm run prepublish` — it must exit non-zero with a message naming the missing file.
+ *   and re-run `npm run validate` — it must exit non-zero with a message naming the missing file.
  *   Then restore: `mv assets/images/small.png.bak assets/images/small.png`
  */
 
@@ -42,14 +42,14 @@ function validatePng(absPath) {
     data = readFileSync(absPath);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.error(`prepublish: image not found: ${absPath}`);
+      console.error(`validate: image not found: ${absPath}`);
       process.exit(1);
     }
     throw err;
   }
 
   if (!data.subarray(0, 8).equals(PNG_SIGNATURE)) {
-    console.error(`prepublish: ${absPath}: not a valid PNG file`);
+    console.error(`validate: ${absPath}: not a valid PNG file`);
     process.exit(1);
   }
 
@@ -57,13 +57,13 @@ function validatePng(absPath) {
   const colorType = data[PNG_BYTE_COLOR_TYPE];
 
   if (depth !== 8) {
-    console.error(`prepublish: ${absPath}: bit depth ${depth}, expected 8`);
+    console.error(`validate: ${absPath}: bit depth ${depth}, expected 8`);
     process.exit(1);
   }
 
   if (!ALLOWED_COLOR_TYPES.has(colorType)) {
     console.error(
-      `prepublish: ${absPath}: color type ${colorType} (${colorTypeLabel(colorType)}), expected 2 (RGB) or 6 (RGBA)`
+      `validate: ${absPath}: color type ${colorType} (${colorTypeLabel(colorType)}), expected 2 (RGB) or 6 (RGBA)`
     );
     process.exit(1);
   }
@@ -79,7 +79,7 @@ try {
   composeConfig = JSON.parse(readFileSync(COMPOSE_APP_JSON, 'utf8'));
 } catch (err) {
   if (err instanceof SyntaxError) {
-    console.error(`prepublish: failed to parse ${COMPOSE_APP_JSON}: ${err.message}`);
+    console.error(`validate: failed to parse ${COMPOSE_APP_JSON}: ${err.message}`);
     process.exit(1);
   }
   throw err;
@@ -87,7 +87,7 @@ try {
 
 const images = composeConfig.images;
 if (!images || typeof images !== 'object') {
-  console.error('prepublish: .homeycompose/app.json is missing an "images" object');
+  console.error('validate: .homeycompose/app.json is missing an "images" object');
   process.exit(1);
 }
 
@@ -100,19 +100,19 @@ const imageEntries = Object.entries(images).map(([key, value]) => ({
 
 // ── 2. Byte-level PNG validation ────────────────────────────────────────────────
 for (const { name, path } of imageEntries) {
-  console.error(`[prepublish] checking ${name}: ${path}`);
+  console.error(`[validate] checking ${name}: ${path}`);
   validatePng(path);
 }
 
 // ── 3. Run Homey publish-level validator ──────────────────────────────────────
-console.error('[prepublish] all image checks passed — running Homey validator...');
+console.error('[validate] all image checks passed — running Homey validator...');
 const result = spawnSync('npx', ['homey', 'app', 'validate', '--level', 'publish'], {
   cwd: ROOT,
   stdio: 'inherit',
 });
 
 if (result.error) {
-  console.error(`prepublish: failed to spawn Homey CLI: ${result.error.message}`);
+  console.error(`validate: failed to spawn Homey CLI: ${result.error.message}`);
   process.exit(1);
 }
 
@@ -121,5 +121,5 @@ if (result.status !== 0) {
 }
 
 // ── 4. Full success ────────────────────────────────────────────────────────────
-console.log(`prepublish: OK (${imageEntries.length} images verified, validator passed)`);
+console.log(`validate: OK (${imageEntries.length} images verified, validator passed)`);
 process.exit(0);

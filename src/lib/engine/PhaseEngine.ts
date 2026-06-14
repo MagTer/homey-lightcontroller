@@ -147,6 +147,7 @@ export function evaluatePhase(
   let cappedAt: number | undefined;
 
   // Fast-forward loop: process multiple transitions if they occurred during the window
+  let hitIterationCap = false;
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     const nextPhase = getNextPhase(phase);
 
@@ -181,10 +182,16 @@ export function evaluatePhase(
       // No transition triggered - we're done
       break;
     }
+
+    // If we just consumed the last allowed iteration, we hit the cap.
+    if (iteration === MAX_ITERATIONS - 1) {
+      hitIterationCap = true;
+    }
   }
 
-  // Check if we hit the iteration cap
-  if (transitions.length >= MAX_ITERATIONS) {
+  // Only report cappedAt if we actually exhausted the allowed iterations.
+  // A full 24-hour cycle produces 4 transitions across 4 phases and is not a degenerate config.
+  if (hitIterationCap) {
     cappedAt = MAX_ITERATIONS;
   }
 

@@ -3,8 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Light Controller Settings</title>
+  <title data-i18n="Light Controller Settings">Light Controller Settings</title>
   <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  <script>
+    (function () {
+      try {
+        var lang = (typeof Homey !== 'undefined' && Homey.getLanguage && Homey.getLanguage()) || 'en';
+        if (lang) document.documentElement.lang = lang;
+      } catch (e) {}
+    })();
+  </script>
   <style>
     * { box-sizing: border-box; }
 
@@ -32,6 +40,32 @@
       background: #f8d7da;
       border: 1px solid #f5c6cb;
       color: #721c24;
+    }
+
+    /* Validation errors */
+    .validation-errors {
+      display: none;
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 0.875rem;
+    }
+    .validation-errors ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .validation-errors li {
+      margin-bottom: 4px;
+    }
+    .validation-errors li:last-child {
+      margin-bottom: 0;
+    }
+    .role-card.has-error,
+    .phase-schedule-card.has-error {
+      border-color: #c62828;
     }
 
     /* Info / help boxes */
@@ -694,8 +728,8 @@
 </head>
 <body>
   <header class="homey-header">
-    <h1 class="homey-title">Light Controller</h1>
-    <p class="homey-subtitle">Automate your lights through four daily phases</p>
+    <h1 class="homey-title" data-i18n="Light Controller">Light Controller</h1>
+    <p class="homey-subtitle" data-i18n="Automate your lights through four daily phases">Automate your lights through four daily phases</p>
   </header>
 
   <div id="status"></div>
@@ -706,45 +740,45 @@
       <div class="status-row">
         <div class="status-item">
           <span class="dot dot-day" id="status-phase-dot"></span>
-          <span id="status-phase">Loading…</span>
+          <span id="status-phase" data-i18n="Loading…">Loading…</span>
         </div>
         <div class="status-item">
-          Outdoor: <span class="value" id="status-lux-outdoor">—</span>
+          <span data-i18n="Outdoor:">Outdoor:</span> <span class="value" id="status-lux-outdoor">—</span>
         </div>
         <div class="status-item">
-          Downstairs: <span class="value" id="status-lux-down">—</span>
+          <span data-i18n="Downstairs:">Downstairs:</span> <span class="value" id="status-lux-down">—</span>
         </div>
         <div class="status-item">
-          Upstairs: <span class="value" id="status-lux-up">—</span>
+          <span data-i18n="Upstairs:">Upstairs:</span> <span class="value" id="status-lux-up">—</span>
         </div>
         <div class="status-item">
-          Last change: <span class="value" id="status-last-transition">—</span>
+          <span data-i18n="Last change:">Last change:</span> <span class="value" id="status-last-transition">—</span>
         </div>
       </div>
     </div>
 
     <!-- What is a role? -->
     <details open>
-      <summary>What is a role?</summary>
+      <summary data-i18n="What is a role?">What is a role?</summary>
       <div class="info-box">
-        <p>
+        <p data-i18n-html="A role is a group of devices that should behave the same way during each phase of the day. Instead of configuring every lamp individually, you assign lamps to a role and control them together.">
           A <strong>role</strong> is a group of devices that should behave the same way during each phase of the day.
           Instead of configuring every lamp individually, you assign lamps to a role and control them together.
         </p>
-        <span class="example">💡 Example: create a "Living Room" role with your sofa lamp and ceiling light, then set them to dim to 30% in the EVENING and turn off at NIGHT.</span>
+        <span class="example" data-i18n="Example: create a 'Living Room' role with your sofa lamp and ceiling light, then set them to dim to 30% in the EVENING and turn off at NIGHT.">💡 Example: create a "Living Room" role with your sofa lamp and ceiling light, then set them to dim to 30% in the EVENING and turn off at NIGHT.</span>
       </div>
     </details>
 
     <!-- Phases overview -->
     <details open>
-      <summary>The four phases</summary>
+      <summary data-i18n="The four phases">The four phases</summary>
       <div class="info-box">
-        <p>Your lights transition automatically between these phases based on time, sunrise/sunset, or light level.</p>
+        <p data-i18n="Your lights transition automatically between these phases based on time, sunrise/sunset, or light level.">Your lights transition automatically between these phases based on time, sunrise/sunset, or light level.</p>
         <div class="phases-row">
-          <span class="phase-pill"><span class="dot dot-night"></span> NIGHT — All off</span>
-          <span class="phase-pill"><span class="dot dot-morning"></span> MORNING — Gentle wake-up</span>
-          <span class="phase-pill"><span class="dot dot-day"></span> DAY — Natural light</span>
-          <span class="phase-pill"><span class="dot dot-evening"></span> EVENING — Cozy dim</span>
+          <span class="phase-pill"><span class="dot dot-night"></span> <span data-i18n="NIGHT — All off">NIGHT — All off</span></span>
+          <span class="phase-pill"><span class="dot dot-morning"></span> <span data-i18n="MORNING — Gentle wake-up">MORNING — Gentle wake-up</span></span>
+          <span class="phase-pill"><span class="dot dot-day"></span> <span data-i18n="DAY — Natural light">DAY — Natural light</span></span>
+          <span class="phase-pill"><span class="dot dot-evening"></span> <span data-i18n="EVENING — Cozy dim">EVENING — Cozy dim</span></span>
         </div>
       </div>
     </details>
@@ -752,81 +786,96 @@
     <!-- Quick Setup -->
     <div id="quick-setup" class="quick-setup" style="display:none;">
       <div class="info-box">
-        <h3>Quick Setup</h3>
-        <p>Choose a preset to get started quickly. You can always customize afterwards.</p>
+        <h3 data-i18n="Quick Setup">Quick Setup</h3>
+        <p data-i18n="Choose a preset to get started quickly.">Choose a preset to get started quickly. You can always customize afterwards.</p>
         <div class="preset-grid">
           <button type="button" class="preset-btn" data-preset="window-downstairs">
-            <strong>Window lights — downstairs</strong>
-            <span>On in Morning &amp; Evening, off at Night &amp; Day</span>
+            <strong data-i18n="Window lights — downstairs">Window lights — downstairs</strong>
+            <span data-i18n="On in Morning &amp; Evening, off at Night &amp; Day">On in Morning &amp; Evening, off at Night &amp; Day</span>
           </button>
           <button type="button" class="preset-btn" data-preset="window-upstairs">
-            <strong>Window lights — upstairs</strong>
-            <span>On in Evening only</span>
+            <strong data-i18n="Window lights — upstairs">Window lights — upstairs</strong>
+            <span data-i18n="On in Evening only">On in Evening only</span>
           </button>
           <button type="button" class="preset-btn" data-preset="twilight-downstairs">
-            <strong>Ambient/twilight — downstairs</strong>
-            <span>Lux-controlled in Morning, Day &amp; Evening</span>
+            <strong data-i18n="Ambient/twilight — downstairs">Ambient/twilight — downstairs</strong>
+            <span data-i18n="Lux-controlled in Morning, Day &amp; Evening">Lux-controlled in Morning, Day &amp; Evening</span>
           </button>
           <button type="button" class="preset-btn" data-preset="twilight-upstairs">
-            <strong>Ambient/twilight — upstairs</strong>
-            <span>Lux-controlled in Morning, Day &amp; Evening</span>
+            <strong data-i18n="Ambient/twilight — upstairs">Ambient/twilight — upstairs</strong>
+            <span data-i18n="Lux-controlled in Morning, Day &amp; Evening">Lux-controlled in Morning, Day &amp; Evening</span>
           </button>
           <button type="button" class="preset-btn" data-preset="outdoor">
-            <strong>Outdoor lights</strong>
-            <span>On in Evening, off otherwise</span>
+            <strong data-i18n="Outdoor lights">Outdoor lights</strong>
+            <span data-i18n="On in Evening, off otherwise">On in Evening, off otherwise</span>
           </button>
           <button type="button" class="preset-btn" data-preset="kitchen-morning">
-            <strong>Kitchen / morning extras</strong>
-            <span>On in Morning &amp; Evening</span>
+            <strong data-i18n="Kitchen / morning extras">Kitchen / morning extras</strong>
+            <span data-i18n="On in Morning &amp; Evening">On in Morning &amp; Evening</span>
           </button>
         </div>
       </div>
     </div>
     <div id="preset-toggle" style="display:none; margin: 0 16px 12px;">
-      <button type="button" class="add-role-btn" id="show-presets-btn" style="width:auto; padding:8px 14px; font-size:0.875rem;">+ Add from preset…</button>
+      <button type="button" class="add-role-btn" id="show-presets-btn" style="width:auto; padding:8px 14px; font-size:0.875rem;"><span>+ </span><span data-i18n="Add from preset…">Add from preset…</span></button>
     </div>
 
     <!-- Lux Sensors section -->
     <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend">Lux Sensors</legend>
+      <legend class="homey-form-legend" data-i18n="Lux Sensors">Lux Sensors</legend>
       <div class="info-box" style="margin: 0 0 12px;">
-        <p>Select lux sensors to enable light-aware transitions and twilight dimming.</p>
+        <p data-i18n="Select lux sensors to enable light-aware transitions and twilight dimming.">Select lux sensors to enable light-aware transitions and twilight dimming.</p>
       </div>
       <div class="sensor-row">
-        <label for="sensor-outdoor">Outdoor lux sensor</label>
+        <label for="sensor-outdoor" data-i18n="Outdoor lux sensor">Outdoor lux sensor</label>
         <select id="sensor-outdoor"><option value="">— None —</option></select>
       </div>
       <div class="sensor-row">
-        <label for="sensor-indoor_downstairs">Indoor lux — downstairs</label>
+        <label for="sensor-indoor_downstairs" data-i18n="Indoor lux — downstairs">Indoor lux — downstairs</label>
         <select id="sensor-indoor_downstairs"><option value="">— None —</option></select>
       </div>
       <div class="sensor-row">
-        <label for="sensor-indoor_upstairs">Indoor lux — upstairs</label>
+        <label for="sensor-indoor_upstairs" data-i18n="Indoor lux — upstairs">Indoor lux — upstairs</label>
         <select id="sensor-indoor_upstairs"><option value="">— None —</option></select>
       </div>
     </fieldset>
 
     <!-- Phase Schedule section -->
     <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend">Phase Schedules</legend>
+      <legend class="homey-form-legend" data-i18n="Phase Schedules">Phase Schedules</legend>
       <div class="info-box" style="margin: 0 0 12px;">
-        <p>Adjust when each phase starts. Time and solar conditions are editable below; lux conditions are read-only.</p>
-        <p class="example">💡 Tip: Add a lux condition to MORNING to skip wake-up lights when it's already bright.</p>
+        <p data-i18n="Adjust when each phase starts. Time and solar conditions are editable below; lux conditions are read-only.">Adjust when each phase starts. Time, solar and lux conditions are editable below.</p>
+        <p class="example" data-i18n="Tip: Add a lux condition to MORNING to skip wake-up lights when it's already bright.">💡 Tip: Add a lux condition to MORNING to skip wake-up lights when it's already bright.</p>
       </div>
       <div id="phases-schedule"></div>
     </fieldset>
 
     <!-- Roles section -->
     <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend">Roles &amp; Devices</legend>
+      <legend class="homey-form-legend" data-i18n="Roles &amp; Devices">Roles &amp; Devices</legend>
       <div id="roles-list" class="roles-list"></div>
-      <button type="button" class="add-role-btn" id="add-role-btn">+ Add Role</button>
+      <button type="button" class="add-role-btn" id="add-role-btn"><span>+ </span><span data-i18n="Add Role">Add Role</span></button>
     </fieldset>
 
     <div class="actions">
-      <button type="button" class="homey-button-primary-full" id="save-btn">Save Configuration</button>
+      <button type="button" class="homey-button-primary-full" id="save-btn" data-i18n="Save Configuration">Save Configuration</button>
     </div>
   </div>
+
+  <script>
+    (function () {
+      if (typeof Homey === 'undefined' || !Homey.__) return;
+      document.querySelectorAll('[data-i18n], [data-i18n-html]').forEach(function (el) {
+        var key = el.dataset.i18n || el.dataset.i18nHtml;
+        if (!key) return;
+        if (el.dataset.i18nHtml) {
+          el.innerHTML = Homey.__(key);
+        } else {
+          el.textContent = Homey.__(key);
+        }
+      });
+    })();
+  </script>
 
   <script>
     // Default phase config — used when creating a new config or filling missing phases.
@@ -845,6 +894,8 @@
         EVENING: { weekday: makeSchedule('18:00'), weekend: makeSchedule('17:00'), states: makeStates() }
       };
     }
+
+    const PHASE_LABEL_KEYS = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
 
     function toRoleSlug(name) {
       return name
@@ -866,7 +917,10 @@
     }
 
     // Status panel helpers
-    const STATUS_PHASE_LABELS = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
+    function phaseLabel(phase) {
+      const key = PHASE_LABEL_KEYS[phase];
+      return key ? Homey.__(key) : phase;
+    }
 
     function renderStatusPanel(status) {
       const panel = document.getElementById('status-panel');
@@ -878,7 +932,7 @@
       const phase = status.currentPhase;
       const labelEl = document.getElementById('status-phase');
       const dotEl = document.getElementById('status-phase-dot');
-      if (labelEl) labelEl.textContent = STATUS_PHASE_LABELS[phase] || phase;
+      if (labelEl) labelEl.textContent = phaseLabel(phase);
       if (dotEl) {
         dotEl.className = 'dot dot-' + phase.toLowerCase();
       }
@@ -887,9 +941,9 @@
       const luxOut = document.getElementById('status-lux-outdoor');
       const luxDown = document.getElementById('status-lux-down');
       const luxUp = document.getElementById('status-lux-up');
-      if (luxOut) luxOut.textContent = lux.outdoor != null ? Math.round(lux.outdoor) + ' lux' : 'No sensor';
-      if (luxDown) luxDown.textContent = lux.indoor_downstairs != null ? Math.round(lux.indoor_downstairs) + ' lux' : 'No sensor';
-      if (luxUp) luxUp.textContent = lux.indoor_upstairs != null ? Math.round(lux.indoor_upstairs) + ' lux' : 'No sensor';
+      if (luxOut) luxOut.textContent = lux.outdoor != null ? Math.round(lux.outdoor) + ' lux' : Homey.__('No sensor');
+      if (luxDown) luxDown.textContent = lux.indoor_downstairs != null ? Math.round(lux.indoor_downstairs) + ' lux' : Homey.__('No sensor');
+      if (luxUp) luxUp.textContent = lux.indoor_upstairs != null ? Math.round(lux.indoor_upstairs) + ' lux' : Homey.__('No sensor');
 
       const lastTrans = document.getElementById('status-last-transition');
       if (lastTrans) {
@@ -929,14 +983,14 @@
       }
 
       if (presetKey === 'window-downstairs') {
-        roles.push({ id, name: 'Window lights — downstairs', devices: [], dimming: null });
+        roles.push({ id, name: Homey.__('Window lights — downstairs'), devices: [], dimming: null });
         ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'MORNING' || pk === 'EVENING' }));
       } else if (presetKey === 'window-upstairs') {
-        roles.push({ id, name: 'Window lights — upstairs', devices: [], dimming: null });
+        roles.push({ id, name: Homey.__('Window lights — upstairs'), devices: [], dimming: null });
         ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'EVENING' }));
       } else if (presetKey === 'twilight-downstairs') {
         roles.push({
-          id, name: 'Ambient/twilight — downstairs', devices: [],
+          id, name: Homey.__('Ambient/twilight — downstairs'), devices: [],
           dimming: {
             activeInPhases: ['MORNING', 'DAY', 'EVENING'],
             source: 'indoor_downstairs',
@@ -946,7 +1000,7 @@
         ensureRoleInPhases(id, phases, (pk) => ({ onoff: false }));
       } else if (presetKey === 'twilight-upstairs') {
         roles.push({
-          id, name: 'Ambient/twilight — upstairs', devices: [],
+          id, name: Homey.__('Ambient/twilight — upstairs'), devices: [],
           dimming: {
             activeInPhases: ['MORNING', 'DAY', 'EVENING'],
             source: 'indoor_upstairs',
@@ -955,10 +1009,10 @@
         });
         ensureRoleInPhases(id, phases, (pk) => ({ onoff: false }));
       } else if (presetKey === 'outdoor') {
-        roles.push({ id, name: 'Outdoor lights', devices: [], dimming: null });
+        roles.push({ id, name: Homey.__('Outdoor lights'), devices: [], dimming: null });
         ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'EVENING' }));
       } else if (presetKey === 'kitchen-morning') {
-        roles.push({ id, name: 'Kitchen / morning extras', devices: [], dimming: null });
+        roles.push({ id, name: Homey.__('Kitchen / morning extras'), devices: [], dimming: null });
         ensureRoleInPhases(id, phases, (pk) => ({ onoff: pk === 'MORNING' || pk === 'EVENING' }));
       }
 
@@ -984,7 +1038,6 @@
 
     function renderRoleStates(role, phases) {
       const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
-      const phaseLabels = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
       const phaseColors = { NIGHT: '#1a237e', MORNING: '#f57c00', DAY: '#fdd835', EVENING: '#7b1fa2' };
 
       return phaseOrder.map((phase) => {
@@ -994,11 +1047,11 @@
         if (isLuxControlled) {
           return `
             <div class="phase-state-cell">
-              <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${phaseLabels[phase]}</div>
-              <div class="lux-pill">Lux-controlled</div>
+              <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${escHtml(phaseLabel(phase))}</div>
+              <div class="lux-pill">${escHtml(Homey.__('Lux-controlled'))}</div>
               <div class="state-row" style="margin-top:6px;opacity:0.7;">
                 <input type="checkbox" id="st-${escHtml(role.id)}-${phase}-onoff" data-role-state="onoff" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${state.onoff ? 'checked' : ''}>
-                <label for="st-${escHtml(role.id)}-${phase}-onoff">Fallback on</label>
+                <label for="st-${escHtml(role.id)}-${phase}-onoff">${escHtml(Homey.__('Fallback on'))}</label>
               </div>
             </div>
           `;
@@ -1006,13 +1059,13 @@
 
         return `
           <div class="phase-state-cell">
-            <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${phaseLabels[phase]}</div>
+            <div class="phase-label"><span class="dot" style="background:${phaseColors[phase]};"></span> ${escHtml(phaseLabel(phase))}</div>
             <div class="state-row">
               <input type="checkbox" id="st-${escHtml(role.id)}-${phase}-onoff" data-role-state="onoff" data-role-id="${escHtml(role.id)}" data-phase="${phase}" ${state.onoff ? 'checked' : ''}>
-              <label for="st-${escHtml(role.id)}-${phase}-onoff">On</label>
+              <label for="st-${escHtml(role.id)}-${phase}-onoff">${escHtml(Homey.__('On'))}</label>
             </div>
             <div class="state-row">
-              <label>Dim</label>
+              <label>${escHtml(Homey.__('Dim'))}</label>
               <input type="number" min="0" max="1" step="0.01" value="${state.dim !== undefined ? state.dim : ''}" data-role-state="dim" data-role-id="${escHtml(role.id)}" data-phase="${phase}">
             </div>
           </div>
@@ -1027,7 +1080,7 @@
         container.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">🛋️</div>
-            <p>No roles yet. Add your first role to get started.</p>
+            <p>${escHtml(Homey.__('No roles yet. Add your first role to get started.'))}</p>
           </div>
         `;
         return;
@@ -1061,65 +1114,66 @@
         card.innerHTML = `
           <div class="role-header">
             <span class="drag-handle">⋮⋮</span>
-            <input type="text" value="${escHtml(role.name)}" placeholder="Role name (e.g. Living Room)" data-field="name">
+            <input type="text" value="${escHtml(role.name)}" placeholder="${escHtml(Homey.__('Role name (e.g. Living Room)'))}" data-field="name">
             <input type="hidden" value="${escHtml(role.id)}" data-field="id">
-            <button type="button" class="remove-btn" data-action="remove">Remove</button>
+            <button type="button" class="remove-btn" data-action="remove">${escHtml(Homey.__('Remove'))}</button>
           </div>
           <div class="role-body">
-            <label>Assigned devices</label>
-            <input type="text" class="device-search" placeholder="Search devices…" data-search-idx="${idx}">
+            <div class="validation-errors" data-role-errors="${escHtml(role.id)}" style="display:none;"></div>
+            <label>${escHtml(Homey.__('Assigned devices'))}</label>
+            <input type="text" class="device-search" placeholder="${escHtml(Homey.__('Search devices…'))}" data-search-idx="${idx}">
             <div class="devices-scroll" id="devices-scroll-${idx}">
               ${deviceListHtml}
             </div>
             <div class="device-count">
-              <span class="checked-count">${checkedIds.size}</span> of ${devices.length} selected
+              <span class="checked-count">${checkedIds.size}</span> ${escHtml(Homey.__('of'))} ${devices.length} ${escHtml(Homey.__('selected'))}
             </div>
           </div>
           <div class="twilight-section">
             <div class="twilight-toggle">
               <input type="checkbox" id="dim-enable-${idx}" data-field="dimming-enabled" ${dimming ? 'checked' : ''}>
-              <label for="dim-enable-${idx}">Enable lux-based dimming</label>
+              <label for="dim-enable-${idx}">${escHtml(Homey.__('Enable lux-based dimming'))}</label>
             </div>
             <div class="twilight-fields" style="display:${dimmingFieldsDisplay}">
               <div class="twilight-row">
-                <label>Active in phases</label>
+                <label>${escHtml(Homey.__('Active in phases'))}</label>
                 <div class="phase-checkboxes">
-                  <label><input type="checkbox" data-field="dimming-phase" value="NIGHT" ${activePhases.includes('NIGHT') ? 'checked' : ''}> Night</label>
-                  <label><input type="checkbox" data-field="dimming-phase" value="MORNING" ${activePhases.includes('MORNING') ? 'checked' : ''}> Morning</label>
-                  <label><input type="checkbox" data-field="dimming-phase" value="DAY" ${activePhases.includes('DAY') ? 'checked' : ''}> Day</label>
-                  <label><input type="checkbox" data-field="dimming-phase" value="EVENING" ${activePhases.includes('EVENING') ? 'checked' : ''}> Evening</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="NIGHT" ${activePhases.includes('NIGHT') ? 'checked' : ''}> ${escHtml(Homey.__('Night'))}</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="MORNING" ${activePhases.includes('MORNING') ? 'checked' : ''}> ${escHtml(Homey.__('Morning'))}</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="DAY" ${activePhases.includes('DAY') ? 'checked' : ''}> ${escHtml(Homey.__('Day'))}</label>
+                  <label><input type="checkbox" data-field="dimming-phase" value="EVENING" ${activePhases.includes('EVENING') ? 'checked' : ''}> ${escHtml(Homey.__('Evening'))}</label>
                 </div>
               </div>
               <div class="twilight-row">
-                <label>Lux sensor</label>
+                <label>${escHtml(Homey.__('Lux sensor'))}</label>
                 <select data-field="dimming-source">
-                  <option value="indoor_downstairs" ${dimming && dimming.source === 'indoor_downstairs' ? 'selected' : ''}>Indoor — downstairs</option>
-                  <option value="indoor_upstairs" ${dimming && dimming.source === 'indoor_upstairs' ? 'selected' : ''}>Indoor — upstairs</option>
+                  <option value="indoor_downstairs" ${dimming && dimming.source === 'indoor_downstairs' ? 'selected' : ''}>${escHtml(Homey.__('Indoor — downstairs'))}</option>
+                  <option value="indoor_upstairs" ${dimming && dimming.source === 'indoor_upstairs' ? 'selected' : ''}>${escHtml(Homey.__('Indoor — upstairs'))}</option>
                 </select>
               </div>
               <div class="twilight-row">
-                <label>Bright lux (off)</label>
+                <label>${escHtml(Homey.__('Bright lux (off)'))}</label>
                 <input type="number" min="0" step="1" value="${dimming ? dimming.brightLux : '100'}" data-field="dimming-brightLux">
               </div>
               <div class="twilight-row">
-                <label>Dark lux (full)</label>
+                <label>${escHtml(Homey.__('Dark lux (full)'))}</label>
                 <input type="number" min="0" step="1" value="${dimming ? dimming.darkLux : '20'}" data-field="dimming-darkLux">
               </div>
               <div class="twilight-row">
-                <label>Bright dim</label>
+                <label>${escHtml(Homey.__('Bright dim'))}</label>
                 <input type="number" min="0" max="1" step="0.01" value="${dimming ? dimming.brightDim : '0'}" data-field="dimming-brightDim">
               </div>
               <div class="twilight-row">
-                <label>Dark dim</label>
+                <label>${escHtml(Homey.__('Dark dim'))}</label>
                 <input type="number" min="0" max="1" step="0.01" value="${dimming ? dimming.darkDim : '0.35'}" data-field="dimming-darkDim">
               </div>
               <div class="help-text">
-                When enabled, indoor lux controls this role's brightness during the selected phases. Outside those phases, the on/off settings above apply. Tip: leave Night unchecked to ensure lights stay off at night.
+                ${escHtml(Homey.__('When enabled, indoor lux controls this role\'s brightness during the selected phases. Outside those phases, the on/off settings above apply. Tip: leave Night unchecked to ensure lights stay off at night.'))}
               </div>
             </div>
           </div>
           <div class="role-states">
-            <div class="role-states-title">Phase behavior</div>
+            <div class="role-states-title">${escHtml(Homey.__('Phase behavior'))}</div>
             <div class="phase-state-grid">
               ${statesHtml}
             </div>
@@ -1181,7 +1235,7 @@
           if (dimEl) {
             const dimVal = parseFloat(dimEl.value);
             if (!isNaN(dimVal) && dimEl.value !== '') {
-              state.dim = Math.min(Math.max(dimVal, 0), 1);
+              state.dim = dimVal;
             }
           }
 
@@ -1216,7 +1270,7 @@
         const sel = document.getElementById('sensor-' + key);
         if (!sel) return;
         const current = sensors && sensors[key] ? sensors[key] : '';
-        let html = '<option value="">— None —</option>';
+        let html = `<option value="">— ${escHtml(Homey.__('None'))} —</option>`;
         luxDevices.forEach((d) => {
           html += `<option value="${escHtml(d.id)}"${d.id === current ? ' selected' : ''}>${escHtml(d.name)}</option>`;
         });
@@ -1228,7 +1282,7 @@
       if (condition.type === 'time') {
         return `
           <div class="condition-row" data-cond-idx="${index}">
-            <span>Time</span>
+            <span>${escHtml(Homey.__('Time'))}</span>
             <input type="time" value="${escHtml(condition.at || '')}" data-cond-type="time">
             <button type="button" class="remove-cond" data-remove-cond>×</button>
           </div>
@@ -1237,22 +1291,27 @@
       if (condition.type === 'solar') {
         return `
           <div class="condition-row" data-cond-idx="${index}">
-            <span>Solar</span>
+            <span>${escHtml(Homey.__('Solar'))}</span>
             <select data-cond-type="solar-event">
-              <option value="sunrise" ${condition.event === 'sunrise' ? 'selected' : ''}>Sunrise</option>
-              <option value="sunset" ${condition.event === 'sunset' ? 'selected' : ''}>Sunset</option>
-              <option value="goldenHour" ${condition.event === 'goldenHour' ? 'selected' : ''}>Golden hour</option>
-              <option value="goldenHourEnd" ${condition.event === 'goldenHourEnd' ? 'selected' : ''}>Golden hour end</option>
+              <option value="sunrise" ${condition.event === 'sunrise' ? 'selected' : ''}>${escHtml(Homey.__('Sunrise'))}</option>
+              <option value="sunset" ${condition.event === 'sunset' ? 'selected' : ''}>${escHtml(Homey.__('Sunset'))}</option>
+              <option value="goldenHour" ${condition.event === 'goldenHour' ? 'selected' : ''}>${escHtml(Homey.__('Golden hour'))}</option>
+              <option value="goldenHourEnd" ${condition.event === 'goldenHourEnd' ? 'selected' : ''}>${escHtml(Homey.__('Golden hour end'))}</option>
             </select>
-            <input type="number" value="${condition.offsetMinutes}" data-cond-type="solar-offset" placeholder="min">
+            <input type="number" value="${condition.offsetMinutes}" data-cond-type="solar-offset" placeholder="${escHtml(Homey.__('min'))}">
             <button type="button" class="remove-cond" data-remove-cond>×</button>
           </div>
         `;
       }
       if (condition.type === 'lux') {
         return `
-          <div class="condition-row" data-cond-idx="${index}" data-cond-json="${escHtml(JSON.stringify(condition))}">
-            <span class="lux-readonly">Lux ${condition.operator === 'lt' ? '&lt;' : '&gt;'} ${condition.value}</span>
+          <div class="condition-row" data-cond-idx="${index}">
+            <span>${escHtml(Homey.__('Lux'))}</span>
+            <select data-cond-type="lux-operator">
+              <option value="lt" ${condition.operator === 'lt' ? 'selected' : ''}>&lt;</option>
+              <option value="gt" ${condition.operator === 'gt' ? 'selected' : ''}>&gt;</option>
+            </select>
+            <input type="number" min="0" step="1" value="${condition.value}" data-cond-type="lux-value" placeholder="lux">
             <button type="button" class="remove-cond" data-remove-cond>×</button>
           </div>
         `;
@@ -1266,7 +1325,6 @@
       container.innerHTML = '';
 
       const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
-      const phaseLabels = { NIGHT: 'Night', MORNING: 'Morning', DAY: 'Day', EVENING: 'Evening' };
       const phaseColors = { NIGHT: '#1a237e', MORNING: '#f57c00', DAY: '#fdd835', EVENING: '#7b1fa2' };
 
       phaseOrder.forEach((phase) => {
@@ -1276,26 +1334,31 @@
 
         const card = document.createElement('div');
         card.className = 'phase-schedule-card';
+        card.dataset.phase = phase;
         card.innerHTML = `
-          <h4><span class="dot" style="background:${phaseColors[phase]};width:10px;height:10px;display:inline-block;border-radius:50%;"></span> ${escHtml(phaseLabels[phase])}</h4>
+          <h4><span class="dot" style="background:${phaseColors[phase]};width:10px;height:10px;display:inline-block;border-radius:50%;"></span> ${escHtml(phaseLabel(phase))}</h4>
           <div class="schedule-block">
-            <strong>Weekday</strong>
+            <strong>${escHtml(Homey.__('Weekday'))}</strong>
+            <div class="validation-errors" data-schedule-errors="weekday" style="display:none;"></div>
             <div class="condition-list" data-schedule-phase="${phase}" data-schedule-type="weekday">
               ${wdConditions.map((c, i) => renderConditionRow(c, i)).join('')}
             </div>
             <div class="add-cond-row">
-              <button type="button" class="add-cond-btn" data-add-cond="time" data-phase="${phase}" data-schedule="weekday">+ Time</button>
-              <button type="button" class="add-cond-btn" data-add-cond="solar" data-phase="${phase}" data-schedule="weekday">+ Solar</button>
+              <button type="button" class="add-cond-btn" data-add-cond="time" data-phase="${phase}" data-schedule="weekday">+ ${escHtml(Homey.__('Time'))}</button>
+              <button type="button" class="add-cond-btn" data-add-cond="solar" data-phase="${phase}" data-schedule="weekday">+ ${escHtml(Homey.__('Solar'))}</button>
+              <button type="button" class="add-cond-btn" data-add-cond="lux" data-phase="${phase}" data-schedule="weekday" aria-label="${escHtml(Homey.__('Add lux condition'))}">+ ${escHtml(Homey.__('Lux'))}</button>
             </div>
           </div>
           <div class="schedule-block">
-            <strong>Weekend</strong>
+            <strong>${escHtml(Homey.__('Weekend'))}</strong>
+            <div class="validation-errors" data-schedule-errors="weekend" style="display:none;"></div>
             <div class="condition-list" data-schedule-phase="${phase}" data-schedule-type="weekend">
               ${weConditions.map((c, i) => renderConditionRow(c, i)).join('')}
             </div>
             <div class="add-cond-row">
-              <button type="button" class="add-cond-btn" data-add-cond="time" data-phase="${phase}" data-schedule="weekend">+ Time</button>
-              <button type="button" class="add-cond-btn" data-add-cond="solar" data-phase="${phase}" data-schedule="weekend">+ Solar</button>
+              <button type="button" class="add-cond-btn" data-add-cond="time" data-phase="${phase}" data-schedule="weekend">+ ${escHtml(Homey.__('Time'))}</button>
+              <button type="button" class="add-cond-btn" data-add-cond="solar" data-phase="${phase}" data-schedule="weekend">+ ${escHtml(Homey.__('Solar'))}</button>
+              <button type="button" class="add-cond-btn" data-add-cond="lux" data-phase="${phase}" data-schedule="weekend" aria-label="${escHtml(Homey.__('Add lux condition'))}">+ ${escHtml(Homey.__('Lux'))}</button>
             </div>
           </div>
         `;
@@ -1332,9 +1395,14 @@
                 });
                 return;
               }
-              const luxJson = row.dataset.condJson;
-              if (luxJson) {
-                conditions.push(JSON.parse(luxJson));
+              const luxOperator = row.querySelector('[data-cond-type="lux-operator"]');
+              const luxValue = row.querySelector('[data-cond-type="lux-value"]');
+              if (luxOperator && luxValue) {
+                conditions.push({
+                  type: 'lux',
+                  operator: luxOperator.value,
+                  value: parseFloat(luxValue.value),
+                });
               }
             });
           }
@@ -1342,6 +1410,135 @@
         });
       });
       return phases;
+    }
+
+    function validateConfig(config) {
+      const errors = [];
+      const phaseOrder = ['NIGHT', 'MORNING', 'DAY', 'EVENING'];
+      const roleIdxMap = {};
+      (config.roles || []).forEach((r, idx) => { roleIdxMap[r.id] = idx; });
+
+      phaseOrder.forEach((phase) => {
+        const pc = config.phases && config.phases[phase];
+        ['weekday', 'weekend'].forEach((scheduleType) => {
+          const schedule = pc && pc[scheduleType];
+          if (!schedule || !schedule.conditions || schedule.conditions.length === 0) {
+            errors.push({
+              type: 'schedule',
+              phase,
+              scheduleType,
+              message: Homey.__('Each phase schedule must have at least one condition.')
+            });
+            return;
+          }
+          schedule.conditions.forEach((cond) => {
+            if (cond.type === 'lux') {
+              if (typeof cond.value !== 'number' || isNaN(cond.value) || cond.value < 0) {
+                errors.push({
+                  type: 'schedule',
+                  phase,
+                  scheduleType,
+                  message: Homey.__('Lux threshold must be a non-negative number.')
+                });
+              }
+            }
+          });
+        });
+      });
+
+      const seenIds = new Set();
+      (config.roles || []).forEach((role, idx) => {
+        if (!role.name || role.name.trim() === '') {
+          errors.push({ type: 'role', idx, message: Homey.__('Role name cannot be empty.') });
+        }
+        if (seenIds.has(role.id)) {
+          errors.push({ type: 'role', idx, message: Homey.__('Role IDs must be unique.') });
+        }
+        seenIds.add(role.id);
+
+        if (role.dimming) {
+          if (!role.dimming.activeInPhases || role.dimming.activeInPhases.length === 0) {
+            errors.push({ type: 'role', idx, message: Homey.__('Lux dimming must have at least one active phase selected.') });
+          }
+          const dims = [role.dimming.brightDim, role.dimming.darkDim];
+          dims.forEach((val) => {
+            if (typeof val !== 'number' || isNaN(val) || val < 0 || val > 1) {
+              errors.push({ type: 'role', idx, message: Homey.__('Dim value must be between 0 and 1.') });
+            }
+          });
+        }
+      });
+
+      phaseOrder.forEach((phase) => {
+        const pc = config.phases && config.phases[phase];
+        if (!pc || !pc.states) return;
+        Object.entries(pc.states).forEach(([roleId, state]) => {
+          if (state.dim !== undefined) {
+            if (typeof state.dim !== 'number' || isNaN(state.dim) || state.dim < 0 || state.dim > 1) {
+              const idx = roleIdxMap[roleId];
+              if (typeof idx === 'number') {
+                errors.push({ type: 'role', idx, message: Homey.__('Dim value must be between 0 and 1.') + ' (' + phaseLabel(phase) + ')' });
+              }
+            }
+          }
+        });
+      });
+
+      return errors;
+    }
+
+    function clearValidationErrors() {
+      document.querySelectorAll('.validation-errors').forEach((el) => {
+        el.style.display = 'none';
+        el.innerHTML = '';
+      });
+      document.querySelectorAll('.role-card.has-error, .phase-schedule-card.has-error').forEach((el) => {
+        el.classList.remove('has-error');
+      });
+    }
+
+    function showValidationErrors(errors) {
+      clearValidationErrors();
+      if (!errors || errors.length === 0) return;
+
+      const roleErrors = {};
+      const scheduleErrors = {};
+
+      errors.forEach((err) => {
+        if (err.type === 'role' && typeof err.idx === 'number') {
+          if (!roleErrors[err.idx]) roleErrors[err.idx] = [];
+          roleErrors[err.idx].push(err.message);
+        } else if (err.type === 'schedule' && err.phase) {
+          const key = err.phase + '-' + err.scheduleType;
+          if (!scheduleErrors[key]) scheduleErrors[key] = [];
+          scheduleErrors[key].push(err.message);
+        }
+      });
+
+      Object.entries(roleErrors).forEach(([idx, msgs]) => {
+        const card = document.querySelector(`.role-card[data-idx="${idx}"]`);
+        if (card) {
+          card.classList.add('has-error');
+          const container = card.querySelector('.validation-errors[data-role-errors]');
+          if (container) {
+            container.innerHTML = '<ul>' + msgs.map((m) => `<li>${escHtml(m)}</li>`).join('') + '</ul>';
+            container.style.display = '';
+          }
+        }
+      });
+
+      Object.entries(scheduleErrors).forEach(([key, msgs]) => {
+        const [phase, scheduleType] = key.split('-');
+        const card = document.querySelector(`.phase-schedule-card[data-phase="${phase}"]`);
+        if (card) {
+          card.classList.add('has-error');
+          const container = card.querySelector(`.validation-errors[data-schedule-errors="${scheduleType}"]`);
+          if (container) {
+            container.innerHTML = '<ul>' + msgs.map((m) => `<li>${escHtml(m)}</li>`).join('') + '</ul>';
+            container.style.display = '';
+          }
+        }
+      });
     }
 
     function onHomeyReady(Homey) {
@@ -1361,7 +1558,7 @@
       }
 
       function showLoading() {
-        setStatus('Loading your devices…', 'loading');
+        setStatus(Homey.__('Loading your devices…'), 'loading');
         appEl.style.opacity = '0.5';
         appEl.style.pointerEvents = 'none';
       }
@@ -1436,7 +1633,7 @@
         })
         .catch((err) => {
           hideLoading();
-          setStatus('Failed to load: ' + err.message, 'error');
+          setStatus(Homey.__('Failed to load: ') + err.message, 'error');
         });
 
       // Add a new blank role.
@@ -1444,7 +1641,7 @@
         const roles = window.__roles || [];
         const devices = window.__onoffDevices || [];
         const phases = window.__existingPhases || null;
-        const tempName = 'New Role';
+        const tempName = Homey.__('New Role');
         const tempId = toRoleSlug(tempName) + '-' + Date.now();
         roles.push({ id: tempId, name: tempName, devices: [], dimming: null });
         window.__roles = roles;
@@ -1545,6 +1742,8 @@
             condition = { type: 'time', at: '08:00' };
           } else if (type === 'solar') {
             condition = { type: 'solar', event: 'sunrise', offsetMinutes: 0 };
+          } else if (type === 'lux') {
+            condition = { type: 'lux', operator: 'lt', value: 0 };
           }
           if (condition) {
             const wrapper = document.createElement('div');
@@ -1557,20 +1756,27 @@
       // Save button handler.
       saveBtn.addEventListener('click', async () => {
         if (saving) return;
-        saving = true;
-        saveBtn.disabled = true;
-        const originalText = saveBtn.textContent;
-        saveBtn.textContent = 'Saving…';
 
         // Collect phase schedules from UI before building config
         window.__existingPhases = collectPhaseSchedule();
         const config = collectConfig();
+        const errors = validateConfig(config);
+        if (errors.length > 0) {
+          showValidationErrors(errors);
+          return;
+        }
+        clearValidationErrors();
+
+        saving = true;
+        saveBtn.disabled = true;
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = Homey.__('Saving…');
 
         try {
           await Homey.api('POST', '/config', config);
-          Homey.alert('Saved! Your lights will now follow the configured phases.');
+          Homey.alert(Homey.__('Saved! Your lights will now follow the configured phases.'));
         } catch (err) {
-          Homey.alert('Save failed: ' + err.message);
+          Homey.alert(Homey.__('Save failed: ') + err.message);
         } finally {
           saving = false;
           saveBtn.disabled = false;
